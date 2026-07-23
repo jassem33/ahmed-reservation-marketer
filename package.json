@@ -1,0 +1,45 @@
+{
+  "name": "whitelabel-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed": "node scripts/seed.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "@fontsource/anton": "^5.2.7",
+    "@fontsource/archivo-black": "^5.2.8",
+    "@fontsource/bebas-neue": "^5.2.7",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/montserrat": "^5.2.8",
+    "@fontsource/oswald": "^5.2.8",
+    "@fontsource/playfair-display": "^5.2.8",
+    "@fontsource/poppins": "^5.2.7",
+    "@fontsource/raleway": "^5.2.8",
+    "@fontsource/space-grotesk": "^5.2.10",
+    "bcryptjs": "^3.0.3",
+    "next": "16.2.10",
+    "nodemailer": "^9.0.3",
+    "pg": "^8.22.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "playwright-core": "^1.61.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

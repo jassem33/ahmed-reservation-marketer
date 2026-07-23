@@ -1,0 +1,59 @@
+name: ahmedmarketer
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: whitelabel_site
+      POSTGRES_USER: whitelabel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définissez POSTGRES_PASSWORD dans .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U whitelabel -d whitelabel_site']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://whitelabel:${POSTGRES_PASSWORD}@db:5432/whitelabel_site
+      SESSION_SECRET: ${SESSION_SECRET:?définissez SESSION_SECRET dans .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?définissez ADMIN_PASSWORD dans .env}
+      TZ: ${TZ:-Africa/Tunis}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - '3000'
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/nginx:/etc/nginx/conf.d:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - app
+    # recharge périodiquement pour prendre en compte les certificats renouvelés
+    command: /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./deploy/certbot/www:/var/www/certbot
+      - ./deploy/certbot/conf:/etc/letsencrypt
+    # renouvellement automatique (le certificat est renouvelé s'il expire dans < 30 jours)
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'
+
+volumes:
+  db-data:

@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+docs
+*.md
+.env.local
+.env
+deploy/certbot
+docker-compose.yml
+Dockerfile
+.dockerignore
+scripts/verify.mjs
+scripts/load-ahmed.mjs
+scripts/make-posters.mjs
+scripts/upgrade-layout.mjs
