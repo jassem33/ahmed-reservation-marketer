@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   if (nameS.length < 2 || nameS.length > 120) {
     return NextResponse.json({ error: 'Nom invalide' }, { status: 400 });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailS)) {
+  if (emailS && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailS)) {
     return NextResponse.json({ error: 'Adresse e-mail invalide' }, { status: 400 });
   }
   if (phoneS.replace(/\D/g, '').length < 8) {
@@ -94,18 +94,20 @@ export async function POST(req: NextRequest) {
     ['Nom', nameS],
     ['WhatsApp', phoneS],
   ];
-  await queueMail(
-    emailS,
-    `Demande de réservation reçue — ${siteTitle}`,
-    brandedEmail({
-      siteTitle,
-      accent,
-      title: 'Votre demande est bien reçue ✅',
-      intro: `Merci ${nameS} ! Nous avons bien reçu votre demande de réservation. Vous recevrez une confirmation très vite.`,
-      rows: details,
-      outro: 'Besoin de modifier ou d’annuler ? Répondez simplement à cet e-mail.',
-    }),
-  );
+  if (emailS) {
+    await queueMail(
+      emailS,
+      `Demande de réservation reçue — ${siteTitle}`,
+      brandedEmail({
+        siteTitle,
+        accent,
+        title: 'Votre demande est bien reçue ✅',
+        intro: `Merci ${nameS} ! Nous avons bien reçu votre demande de réservation. Vous recevrez une confirmation très vite.`,
+        rows: details,
+        outro: 'Besoin de modifier ou d’annuler ? Répondez simplement à cet e-mail.',
+      }),
+    );
+  }
   const mailCfg = await getMailConfig();
   if (mailCfg.adminEmail) {
     await queueMail(
@@ -116,7 +118,7 @@ export async function POST(req: NextRequest) {
         accent,
         title: 'Nouvelle demande de réservation',
         intro: 'Une nouvelle demande vient d’arriver sur votre site.',
-        rows: [...details, ['E-mail client', emailS], ['Message', String(message ?? '—') || '—']],
+        rows: [...details, ['E-mail client', emailS || '—'], ['Message', String(message ?? '—') || '—']],
         ctaLabel: 'Répondre sur WhatsApp',
         ctaUrl:
           waLink(phoneS, `Bonjour ${nameS}, bien reçu votre demande de réservation (${frDate(dateS)} à ${slotS}) — je vous confirme rapidement !`) ??

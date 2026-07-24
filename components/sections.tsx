@@ -242,16 +242,12 @@ function Hero({ sec, i }: SP) {
 /* Services                                                            */
 /* ------------------------------------------------------------------ */
 function Services({ sec, i }: SP) {
-  const d = sec.data as ServicesData & { eyebrow?: TextNode };
+  const d = sec.data as ServicesData & { eyebrow?: TextNode; layout?: string };
   const p = `page.sections.${i}.data`;
-  const { arrayOp } = useEdit();
-  return (
-    <div className="mx-auto max-w-6xl px-6">
-      <SectionHeader p={p} eyebrow={d.eyebrow} title={d.title} subtitle={d.subtitle} />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {d.items.map((it, j) => (
-          <Reveal key={j} delay={j * 70}>
+  const { editMode, arrayOp } = useEdit();
+  const cards = d.items.map((it, j) => (
             <ItemShell
+              key={j}
               parent={`${p}.items`}
               index={j}
               count={d.items.length}
@@ -299,14 +295,30 @@ function Services({ sec, i }: SP) {
                 </div>
               )}
             </ItemShell>
-          </Reveal>
-        ))}
-        <AddTile
-          label="Service"
-          className="min-h-44"
-          onClick={() => arrayOp(`${p}.items`, 'insert', d.items.length, newServiceItem())}
-        />
-      </div>
+  ));
+  const addTile = (
+    <AddTile
+      key="add"
+      label="Service"
+      className="min-h-44 w-full"
+      onClick={() => arrayOp(`${p}.items`, 'insert', d.items.length, newServiceItem())}
+    />
+  );
+  return (
+    <div className="mx-auto max-w-6xl px-6">
+      <SectionHeader p={p} eyebrow={d.eyebrow} title={d.title} subtitle={d.subtitle} />
+      {d.layout === 'grid' ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {cards}
+          {addTile}
+        </div>
+      ) : (
+        <Reveal>
+          <Carousel itemWidth="clamp(230px, 66vw, 290px)" ariaLabel="Services">
+            {editMode ? [...cards, addTile] : cards}
+          </Carousel>
+        </Reveal>
+      )}
     </div>
   );
 }

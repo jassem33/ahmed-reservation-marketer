@@ -227,8 +227,8 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
             <input style={inputStyle} value={name} disabled={editMode} onChange={(e) => setName(e.target.value)} required minLength={2} placeholder="Votre nom" />
           </div>
           <div>
-            {label('E-mail')}
-            <input type="email" style={inputStyle} value={email} disabled={editMode} onChange={(e) => setEmail(e.target.value)} required placeholder="vous@email.com" />
+            {label('E-mail (facultatif)')}
+            <input type="email" style={inputStyle} value={email} disabled={editMode} onChange={(e) => setEmail(e.target.value)} placeholder="vous@email.com" />
           </div>
           <div>
             {label('WhatsApp')}

@@ -168,7 +168,7 @@ function SectionControl({ path }: { path: string }) {
       <Field label="Espacement vertical">
         <Slider value={st.paddingY ?? 96} min={24} max={180} unit=" px" onChange={(v) => setStyle({ paddingY: v })} />
       </Field>
-      {['media', 'websites'].includes(section.type) && (
+      {['media', 'websites', 'services'].includes(section.type) && (
         <Field label="Disposition">
           <div className="wl-row">
             <button
