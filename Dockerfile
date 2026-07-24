@@ -31,6 +31,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/db ./db
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed.mjs ./scripts/seed.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/lib/default-site.json ./lib/default-site.json
+# bcryptjs n'est pas tracé dans la sortie standalone (il est intégré au bundle
+# de la route de connexion) ; seed.mjs en a besoin au runtime → on le copie.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
 
