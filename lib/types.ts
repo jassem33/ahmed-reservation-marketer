@@ -19,6 +19,7 @@ export type SectionType =
   | 'services'
   | 'media'
   | 'websites'
+  | 'clients'
   | 'stats'
   | 'testimonials'
   | 'booking'
@@ -89,8 +90,10 @@ export type SiteFooterData = {
   socials: Array<{ kind: string; url: string }>;
   legal: TextNode;
 };
-export type ServiceItem = { emoji: string; bg?: string; title: TextNode; desc: TextNode };
+export type ServiceItem = { emoji: string; bg?: string; image?: ImageNode; title: TextNode; desc: TextNode };
 export type ServicesData = { title: TextNode; subtitle: TextNode; items: ServiceItem[] };
+export type ClientItem = { logo: ImageNode; name: TextNode; url?: string };
+export type ClientsData = { title: TextNode; subtitle?: TextNode; items: ClientItem[] };
 export type MediaData = { title: TextNode; subtitle: TextNode; columns: number; items: VideoNode[] };
 export type WebsiteItem = { shot: ImageNode; name: TextNode; url: string };
 export type WebsitesData = { title: TextNode; buttonText: TextNode; items: WebsiteItem[] };

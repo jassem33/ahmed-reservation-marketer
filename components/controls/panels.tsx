@@ -308,8 +308,34 @@ function ServiceControl({ path }: { path: string }) {
   const { site, update } = useEdit();
   const item = getAtPath(site, path) as any;
   if (!item) return null;
+  const hasImage = !!item.image?.mediaId;
   return (
     <>
+      {hasImage && (
+        <div className="wl-field">
+          <img src={mediaUrl(item.image.mediaId)} alt="" style={{ width: '100%', borderRadius: 10 }} />
+        </div>
+      )}
+      <Field label={hasImage ? "Remplacer l'image" : 'Utiliser une image (remplace la carte)'}>
+        <FileButton
+          accept="image/*"
+          label="🖼 Image du service…"
+          onDone={(id) => update(`${path}.image`, { ...(item.image || {}), mediaId: id })}
+        />
+        <p className="wl-hint" style={{ marginTop: 6 }}>
+          Une image affiche un visuel carré à la place de la carte icône ci-dessous.
+        </p>
+      </Field>
+      {hasImage && (
+        <button
+          type="button"
+          className="wl-btn wl-btn-danger"
+          style={{ marginBottom: 16 }}
+          onClick={() => update(`${path}.image`, { ...item.image, mediaId: null })}
+        >
+          Retirer l'image (revenir à la carte icône)
+        </button>
+      )}
       <Field label="Icône">
         <div className="wl-row" style={{ marginBottom: 8 }}>
           {SERVICE_ICON_KEYS.map((k) => (
@@ -367,6 +393,54 @@ function WebsiteControl({ path }: { path: string }) {
         </button>
       )}
       <p className="wl-hint" style={{ marginTop: 12 }}>Cliquez sur le nom du site dans la page pour le modifier.</p>
+    </>
+  );
+}
+
+function ClientControl({ path }: { path: string }) {
+  const { site, update } = useEdit();
+  const item = getAtPath(site, path) as any;
+  if (!item) return null;
+  return (
+    <>
+      {item.logo?.mediaId && (
+        <div className="wl-field">
+          <img
+            src={mediaUrl(item.logo.mediaId)}
+            alt=""
+            style={{ width: '100%', borderRadius: 10, background: '#fff', padding: 8 }}
+          />
+        </div>
+      )}
+      <Field label={item.logo?.mediaId ? 'Remplacer le logo' : 'Ajouter le logo'}>
+        <FileButton
+          accept="image/*"
+          label="🖼 Logo du client…"
+          onDone={(id) => update(`${path}.logo`, { ...(item.logo || {}), mediaId: id })}
+        />
+      </Field>
+      {item.logo?.mediaId && (
+        <button
+          type="button"
+          className="wl-btn wl-btn-danger"
+          style={{ marginBottom: 14 }}
+          onClick={() => update(`${path}.logo`, { ...item.logo, mediaId: null })}
+        >
+          Retirer le logo
+        </button>
+      )}
+      <Field label="Lien du site (optionnel)">
+        <input
+          className="wl-input"
+          placeholder="https://exemple.tn"
+          value={item.url ?? ''}
+          onChange={(e) => update(`${path}.url`, e.target.value)}
+        />
+        <p className="wl-hint" style={{ marginTop: 6 }}>
+          Laissez vide pour un logo sans lien.
+        </p>
+      </Field>
+      <p className="wl-hint">Cliquez sur le nom sous le logo dans la page pour le modifier.</p>
     </>
   );
 }
@@ -1176,6 +1250,7 @@ const TITLES: Record<string, string> = {
   nav: '🧭 Barre de navigation',
   'item-service': '🧩 Carte service',
   'item-website': '🌐 Site réalisé',
+  'item-client': '🏷 Logo client',
   'item-testimonial': '⭐ Avis client',
   'item-social': '🔗 Réseau social',
   'item-cta': '🔘 Bouton d’action',
@@ -1213,6 +1288,8 @@ export default function SidePanel() {
         return <ServiceControl path={selected.path} />;
       case 'item-website':
         return <WebsiteControl path={selected.path} />;
+      case 'item-client':
+        return <ClientControl path={selected.path} />;
       case 'item-testimonial':
         return <TestimonialControl path={selected.path} />;
       case 'item-social':

@@ -5,8 +5,15 @@ import type { Section, SectionType } from './types';
 export const newServiceItem = () => ({
   emoji: '✨',
   icon: 'zap',
+  image: { mediaId: null, alt: '' },
   title: { text: 'Nouveau service' },
   desc: { text: 'Décrivez ce service en une ou deux phrases.' },
+});
+
+export const newClientItem = () => ({
+  logo: { mediaId: null, alt: 'Logo client' },
+  name: { text: 'Nouveau client' },
+  url: '',
 });
 
 export const newVideoItem = () => ({ mediaId: null, posterId: null, caption: '' });
@@ -68,6 +75,12 @@ const DATA_TEMPLATES: Record<SectionType, () => any> = {
     buttonText: { text: 'Découvrir ↗' },
     layout: 'carousel',
     items: [newWebsiteItem(), newWebsiteItem(), newWebsiteItem()],
+  }),
+  clients: () => ({
+    eyebrow: { text: 'Références' },
+    title: { text: 'Ils nous font confiance' },
+    subtitle: { text: 'Les marques que nous accompagnons au quotidien.' },
+    items: [newClientItem(), newClientItem(), newClientItem(), newClientItem()],
   }),
   stats: () => ({
     eyebrow: { text: 'Résultats' },
@@ -141,6 +154,7 @@ export const SECTION_LABELS: Record<SectionType, string> = {
   services: 'Services',
   media: 'Vidéos (carrousel / grille)',
   websites: 'Sites web réalisés',
+  clients: 'Clients (logos)',
   stats: 'Statistiques / résultats',
   testimonials: 'Avis clients',
   booking: 'Réservation (rendez-vous)',

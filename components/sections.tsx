@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import type {
+  ClientsData,
   CtaNode,
   FooterData,
   HeroData,
@@ -17,6 +18,7 @@ import type {
   WebsitesData,
 } from '@/lib/types';
 import {
+  newClientItem,
   newProofItem,
   newServiceItem,
   newSocialItem,
@@ -257,31 +259,45 @@ function Services({ sec, i }: SP) {
               kind="item-service"
               className="h-full"
             >
-              <div
-                className="wl-card flex h-full flex-col gap-3 p-6"
-                style={{
-                  background: it.bg || 'linear-gradient(165deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 45%, #000))',
-                  borderRadius: 'var(--radius)',
-                }}
-              >
+              {(it as any).image?.mediaId ? (
                 <div
-                  className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-white/10"
-                  style={{ fontSize: 24, color: '#fff' }}
+                  className="wl-card relative h-full overflow-hidden"
+                  style={{ aspectRatio: '1 / 1', borderRadius: 'var(--radius)' }}
                 >
-                  {hasServiceIcon((it as any).icon) ? <ServiceIcon name={(it as any).icon} /> : it.emoji}
+                  <Img
+                    path={`${p}.items.${j}.image`}
+                    node={(it as any).image}
+                    className="absolute inset-0"
+                    placeholderLabel="Image"
+                  />
                 </div>
-                <T
-                  path={`${p}.items.${j}.title`}
-                  node={it.title}
-                  base={{ font: 'heading', size: 21, transform: 'uppercase', lh: 1.18 }}
-                  className="mt-1"
-                />
-                <T
-                  path={`${p}.items.${j}.desc`}
-                  node={it.desc}
-                  base={{ font: 'body', size: 14, color: 'rgba(255,255,255,.82)', lh: 1.65 }}
-                />
-              </div>
+              ) : (
+                <div
+                  className="wl-card flex h-full flex-col gap-3 p-6"
+                  style={{
+                    background: it.bg || 'linear-gradient(165deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 45%, #000))',
+                    borderRadius: 'var(--radius)',
+                  }}
+                >
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-white/10"
+                    style={{ fontSize: 24, color: '#fff' }}
+                  >
+                    {hasServiceIcon((it as any).icon) ? <ServiceIcon name={(it as any).icon} /> : it.emoji}
+                  </div>
+                  <T
+                    path={`${p}.items.${j}.title`}
+                    node={it.title}
+                    base={{ font: 'heading', size: 21, transform: 'uppercase', lh: 1.18 }}
+                    className="mt-1"
+                  />
+                  <T
+                    path={`${p}.items.${j}.desc`}
+                    node={it.desc}
+                    base={{ font: 'body', size: 14, color: 'rgba(255,255,255,.82)', lh: 1.65 }}
+                  />
+                </div>
+              )}
             </ItemShell>
           </Reveal>
         ))}
@@ -394,6 +410,72 @@ function Websites({ sec, i }: SP) {
           <Carousel itemWidth="clamp(210px, 60vw, 250px)" ariaLabel="Sites réalisés">
             {editMode ? [...cards, addTile] : cards}
           </Carousel>
+        </Reveal>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Clients (logos en niveaux de gris → couleur au survol)              */
+/* ------------------------------------------------------------------ */
+function Clients({ sec, i }: SP) {
+  const d = sec.data as ClientsData & { eyebrow?: TextNode };
+  const p = `page.sections.${i}.data`;
+  const { editMode, arrayOp } = useEdit();
+  const items = d.items ?? [];
+  const tile = (it: ClientsData['items'][number], j: number) => (
+    <ItemShell
+      key={j}
+      parent={`${p}.items`}
+      index={j}
+      count={items.length}
+      path={`${p}.items.${j}`}
+      kind="item-client"
+      className="flex flex-col items-center gap-3"
+    >
+      <a
+        href={editMode ? undefined : it.url || undefined}
+        target="_blank"
+        rel="noreferrer"
+        className="wl-logo-link w-full"
+        onClick={(e) => editMode && e.preventDefault()}
+      >
+        <div className="wl-logo-tile">
+          <Img path={`${p}.items.${j}.logo`} node={it.logo} className="absolute inset-0" placeholderLabel="Logo" />
+        </div>
+      </a>
+      {(it.name?.text || editMode) && (
+        <T
+          path={`${p}.items.${j}.name`}
+          node={it.name}
+          base={{ font: 'body', size: 13, weight: 600, color: 'var(--c-muted)', align: 'center' }}
+        />
+      )}
+    </ItemShell>
+  );
+  const tiles = items.map(tile);
+  const addTile = (
+    <AddTile
+      key="add"
+      label="Client"
+      className="aspect-square w-full"
+      onClick={() => arrayOp(`${p}.items`, 'insert', items.length, newClientItem())}
+    />
+  );
+  return (
+    <div className="mx-auto max-w-6xl px-6">
+      <SectionHeader p={p} eyebrow={d.eyebrow} title={d.title} subtitle={(d as any).subtitle} center />
+      {editMode ? (
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+          {tiles}
+          {addTile}
+        </div>
+      ) : (
+        <Reveal>
+          <AutoMarquee itemWidth="clamp(128px, 34vw, 168px)" duration={Math.max(22, items.length * 6)}>
+            {tiles}
+          </AutoMarquee>
         </Reveal>
       )}
     </div>
@@ -773,6 +855,7 @@ const RENDERERS: Record<SectionType, React.ComponentType<SP>> = {
   services: Services,
   media: MediaGrid,
   websites: Websites,
+  clients: Clients,
   stats: Stats,
   testimonials: Testimonials,
   booking: Booking,

@@ -439,6 +439,65 @@ body {
   transform: scale(1.08);
 }
 
+/* ---------- Logos clients (niveaux de gris → couleur au survol) ---------- */
+.wl-logo-link {
+  display: block;
+}
+.wl-logo-tile {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius, 16px);
+  background: var(--c-surface, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.wl-logo-tile .wl-img {
+  filter: grayscale(1);
+  opacity: 0.68;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+.wl-logo-link:hover .wl-logo-tile .wl-img {
+  filter: none;
+  opacity: 1;
+}
+
+/* ---------- Bouton « retour en haut » ---------- */
+.wl-scrolltop {
+  position: fixed;
+  right: 18px;
+  bottom: 84px;
+  z-index: 54;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: var(--c-primary, #551ab2);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.18s;
+  animation: wl-fade-in 0.2s ease;
+}
+.wl-scrolltop:hover {
+  transform: translateY(-3px);
+}
+@keyframes wl-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

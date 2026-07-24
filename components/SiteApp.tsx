@@ -9,6 +9,7 @@ import { SectionBody, SectionFrame } from './sections';
 import Navbar from './Navbar';
 import Toolbar from './Toolbar';
 import SidePanel from './controls/panels';
+import ScrollTop from './ScrollTop';
 import { SocialIcon } from './icons';
 
 function WhatsAppFab() {
@@ -86,6 +87,7 @@ function Root() {
         )}
         <WhatsAppFab />
       </div>
+      <ScrollTop />
       {isAdmin && <Toolbar />}
       <SidePanel />
     </div>
