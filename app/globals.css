@@ -498,6 +498,15 @@ body {
   }
 }
 
+/* ---------- Listes déroulantes natives lisibles sur fond sombre ---------- */
+select {
+  color-scheme: dark;
+}
+select option {
+  background-color: var(--c-surface, #16161c);
+  color: var(--c-text, #f4f4f6);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
