@@ -14,9 +14,11 @@ import { SocialIcon } from './icons';
 
 function WhatsAppFab() {
   const { site, editMode } = useEdit();
-  const footer = site.page.sections.find((s) => s.type === 'footer');
-  if (!footer || footer.data.fabEnabled === false) return null;
-  const wa = String(footer.data.whatsapp || '').replace(/[^\d+]/g, '').replace(/^\+/, '');
+  const booking = site.page.sections.find((s) => s.type === 'booking')?.data as any;
+  const footer = site.page.sections.find((s) => s.type === 'footer')?.data as any;
+  const fabEnabled = booking?.fabEnabled ?? footer?.fabEnabled;
+  if (fabEnabled === false) return null;
+  const wa = String(booking?.whatsapp || footer?.whatsapp || '').replace(/[^\d+]/g, '').replace(/^\+/, '');
   if (!wa) return null;
   return (
     <a

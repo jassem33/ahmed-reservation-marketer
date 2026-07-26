@@ -130,9 +130,21 @@ export async function POST(req: NextRequest) {
 
   // lien WhatsApp de confirmation côté client (vers le numéro du site)
   const footer = site.page.sections.find((s) => s.type === 'footer');
-  const wa = waLink(
-    String(footer?.data?.whatsapp ?? ''),
-    `Bonjour, je viens de réserver « ${String(service ?? '')} » le ${frDate(dateS)} à ${slotS} au nom de ${nameS}. Merci de me confirmer 🙏`,
+  const waNumber = String(
+    (booking.data as { whatsapp?: string })?.whatsapp ?? footer?.data?.whatsapp ?? '',
   );
+  const lines = [
+    'Bonjour, je souhaite confirmer ma réservation 📅',
+    '',
+    `• Nom : ${nameS}`,
+    `• Service : ${String(service ?? '—')}`,
+    `• Date : ${frDate(dateS)} à ${slotS}`,
+    `• Téléphone : ${phoneS}`,
+  ];
+  if (emailS) lines.push(`• E-mail : ${emailS}`);
+  const msgTrim = String(message ?? '').trim();
+  if (msgTrim) lines.push(`• Message : ${msgTrim}`);
+  lines.push('', 'Merci de me confirmer 🙏');
+  const wa = waLink(waNumber, lines.join('\n'));
   return NextResponse.json({ ok: true, id, whatsapp: wa });
 }

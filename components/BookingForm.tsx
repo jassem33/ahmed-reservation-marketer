@@ -76,6 +76,8 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
       if (!res.ok) throw new Error(data.error || 'Une erreur est survenue');
       setWaUrl(data.whatsapp ?? null);
       setStatus('done');
+      // redirige automatiquement vers WhatsApp avec le récapitulatif pré-rempli
+      if (data.whatsapp) window.location.href = data.whatsapp;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
       setStatus('error');
@@ -250,8 +252,9 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
           disabled={editMode || status === 'sending' || !date || !slot}
           style={{ opacity: editMode || !date || !slot ? 0.55 : 1, border: 'none', cursor: 'pointer' }}
         >
+          <SocialIcon kind="whatsapp" size={19} />
           <T path={`${p}.submitLabel`} node={d.submitLabel} base={{ font: 'body', size: 15, weight: 700 }} as="span" />
-          {status === 'sending' ? <span aria-hidden>…</span> : <span aria-hidden>→</span>}
+          {status === 'sending' ? <span aria-hidden>…</span> : null}
         </button>
       </form>
       {editMode && (

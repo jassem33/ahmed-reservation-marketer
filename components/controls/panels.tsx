@@ -836,6 +836,26 @@ function BookingExtras({ path }: { path: string }) {
   const services: string[] = data.services ?? [];
   return (
     <>
+      <Field label="Numéro WhatsApp (international)">
+        <input
+          className="wl-input"
+          placeholder="+216 20 000 000"
+          value={data.whatsapp ?? ''}
+          onChange={(e) => update(`${path}.data.whatsapp`, e.target.value)}
+        />
+        <p className="wl-hint" style={{ marginTop: 6 }}>
+          Reçoit le récapitulatif de la réservation (bouton « Réserver »). Laissez vide pour désactiver la redirection WhatsApp.
+        </p>
+      </Field>
+      <Field label="Bouton WhatsApp flottant (coin de l'écran)">
+        <button
+          type="button"
+          className={`wl-btn ${data.fabEnabled === false ? 'wl-btn-danger' : 'wl-btn-primary'}`}
+          onClick={() => update(`${path}.data.fabEnabled`, data.fabEnabled === false ? true : false)}
+        >
+          {data.fabEnabled === false ? 'Désactivé — cliquer pour activer' : 'Activé — cliquer pour désactiver'}
+        </button>
+      </Field>
       <Field label="Services proposés">
         {services.map((s, j) => (
           <div key={j} className="wl-row" style={{ marginBottom: 6 }}>

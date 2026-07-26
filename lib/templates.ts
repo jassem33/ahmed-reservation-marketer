@@ -120,6 +120,8 @@ const DATA_TEMPLATES: Record<SectionType, () => any> = {
       text: 'Votre demande de réservation est bien enregistrée. Vous recevrez une confirmation par e-mail très rapidement.',
     },
     whatsappBtnLabel: { text: 'Confirmer sur WhatsApp' },
+    whatsapp: '',
+    fabEnabled: true,
   }),
   footer: () => ({
     title: { text: 'Prêt à démarrer ?\nContactez-nous dès aujourd’hui !' },
