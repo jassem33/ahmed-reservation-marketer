@@ -217,23 +217,6 @@ function Hero({ sec, i }: SP) {
           </div>
         </div>
       </div>
-      {/* Bandeau défilant */}
-      {(d.marqueeText?.text || editMode) && d.marqueeText && (
-        <div className="wl-marquee mt-16 md:mt-20">
-          <div className="wl-marquee-inner">
-            {[0, 1].map((k) => (
-              <T
-                key={k}
-                path={`${p}.marqueeText`}
-                node={d.marqueeText}
-                base={{ font: 'heading', size: 15, color: 'var(--c-muted)', transform: 'uppercase', ls: 4 }}
-                as="span"
-                className="px-6"
-              />
-            ))}
-          </div>
-        </div>
-      )}
     </>
   );
 }

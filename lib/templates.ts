@@ -52,7 +52,6 @@ const DATA_TEMPLATES: Record<SectionType, () => any> = {
       { value: { text: '+250%' }, label: { text: 'ROAS moyen' } },
       { value: { text: '5 ans' }, label: { text: "d'expérience" } },
     ],
-    marqueeText: { text: 'Meta Ads • Contenu créatif • Sites e-commerce • Branding • ' },
   }),
   services: () => ({
     eyebrow: { text: 'Ce que nous faisons' },

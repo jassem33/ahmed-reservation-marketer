@@ -60,3 +60,18 @@ CREATE TABLE IF NOT EXISTS media (
   data BYTEA NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Suivi des visiteurs (pages vues, clics, profondeur de défilement)
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id BIGSERIAL PRIMARY KEY,
+  session_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('view', 'click', 'scroll')),
+  label TEXT,
+  path TEXT,
+  referrer TEXT,
+  device TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS analytics_events_created_idx ON analytics_events (created_at);
+CREATE INDEX IF NOT EXISTS analytics_events_kind_idx ON analytics_events (kind);

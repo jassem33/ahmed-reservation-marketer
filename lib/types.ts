@@ -76,7 +76,6 @@ export type HeroData = {
   ctaPrimary?: CtaNode;
   ctaSecondary?: CtaNode;
   badges?: Array<{ value: TextNode; label: TextNode }>;
-  marqueeText?: TextNode;
 };
 
 export type SiteFooterData = {

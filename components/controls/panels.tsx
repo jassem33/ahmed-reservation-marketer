@@ -1,11 +1,10 @@
 'use client';
 
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ImageNode, SectionType, TextNode, Theme, VideoNode } from '@/lib/types';
 import { getAtPath } from '@/lib/path';
 import { newSection, SECTION_LABELS } from '@/lib/templates';
-import { FONTS } from '@/lib/fonts';
 import { SOCIAL_KINDS } from '../icons';
 import { SERVICE_ICON_KEYS, ServiceIcon, serviceIconLabel } from '../service-icons';
 import { mediaUrl } from '../atoms';
@@ -571,146 +570,9 @@ function SectionTargetPicker({ value, onChange }: { value: string; onChange: (v:
 }
 
 /* ------------------------------------------------------------------ */
-/* Réservations : boîte de réception                                   */
-/* ------------------------------------------------------------------ */
-type Reservation = {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  service: string | null;
-  date: string;
-  slot: string;
-  message: string | null;
-  status: 'pending' | 'confirmed' | 'cancelled';
-};
-
-const STATUS_FR: Record<Reservation['status'], { label: string; color: string }> = {
-  pending: { label: 'En attente', color: '#ffb300' },
-  confirmed: { label: 'Confirmée', color: '#35d07f' },
-  cancelled: { label: 'Annulée', color: '#8a8a97' },
-};
-
-function ReservationsControl() {
-  const { select, site } = useEdit();
-  const [list, setList] = useState<Reservation[]>([]);
-  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [busy, setBusy] = useState<number | null>(null);
-
-  const load = () =>
-    fetch('/api/reservations')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d) => {
-        setList(d.reservations);
-        setState('ready');
-      })
-      .catch(() => setState('error'));
-  useEffect(() => {
-    void load();
-  }, []);
-
-  const setStatus = async (id: number, status: Reservation['status']) => {
-    setBusy(id);
-    await fetch(`/api/reservations/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    setBusy(null);
-    void load();
-  };
-
-  const frDay = (d: string) =>
-    new Date(`${d}T00:00:00`).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-  const brand = site.page.nav?.brand ?? site.theme.brand.siteTitle;
-
-  if (state === 'loading') return <p className="wl-hint">Chargement…</p>;
-  if (state === 'error') return <p className="wl-hint">Impossible de charger les réservations.</p>;
-  return (
-    <>
-      <div className="wl-row" style={{ marginBottom: 14, justifyContent: 'space-between' }}>
-        <span className="wl-hint">{list.length} réservation(s)</span>
-        <button type="button" className="wl-btn" onClick={() => select({ kind: 'mailSettings', path: '' })}>
-          ✉️ Réglages e-mail
-        </button>
-      </div>
-      {!list.length && <p className="wl-hint">Aucune réservation pour le moment.</p>}
-      {list.map((r) => {
-        const wa = r.phone.replace(/[^\d+]/g, '').replace(/^\+/, '');
-        const confirmMsg = `Bonjour ${r.name}, votre réservation « ${r.service ?? ''} » du ${frDay(r.date)} à ${r.slot} est confirmée ✅ — ${brand}`;
-        return (
-          <div
-            key={r.id}
-            style={{ border: '1px solid #2c2c36', borderRadius: 12, padding: 12, marginBottom: 10 }}
-          >
-            <div className="wl-row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-              <strong style={{ fontSize: 14 }}>{r.name}</strong>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: STATUS_FR[r.status].color,
-                  border: `1px solid ${STATUS_FR[r.status].color}44`,
-                  borderRadius: 999,
-                  padding: '3px 10px',
-                }}
-              >
-                {STATUS_FR[r.status].label}
-              </span>
-            </div>
-            <div className="wl-hint" style={{ marginBottom: 4 }}>
-              📅 {frDay(r.date)} à {r.slot}
-              {r.service ? ` — ${r.service}` : ''}
-            </div>
-            <div className="wl-hint" style={{ marginBottom: 8 }}>
-              {r.email} · {r.phone}
-            </div>
-            {r.message && (
-              <div className="wl-hint" style={{ marginBottom: 8, fontStyle: 'italic' }}>
-                « {r.message} »
-              </div>
-            )}
-            <div className="wl-row">
-              {r.status !== 'confirmed' && (
-                <button type="button" className="wl-btn wl-btn-primary" disabled={busy === r.id} onClick={() => setStatus(r.id, 'confirmed')}>
-                  ✓ Confirmer
-                </button>
-              )}
-              {r.status !== 'cancelled' && (
-                <button type="button" className="wl-btn wl-btn-danger" disabled={busy === r.id} onClick={() => setStatus(r.id, 'cancelled')}>
-                  ✕ Annuler
-                </button>
-              )}
-              {wa && (
-                <a
-                  className="wl-btn"
-                  style={{ textDecoration: 'none', background: '#144f2c', borderColor: '#1fb355' }}
-                  href={`https://wa.me/${wa}?text=${encodeURIComponent(confirmMsg)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  WhatsApp
-                </a>
-              )}
-              <a className="wl-btn" style={{ textDecoration: 'none' }} href={`mailto:${r.email}`}>
-                ✉️
-              </a>
-            </div>
-          </div>
-        );
-      })}
-      <p className="wl-hint" style={{ marginTop: 10 }}>
-        « Confirmer » envoie automatiquement l'e-mail de confirmation au client. Le bouton WhatsApp
-        ouvre une conversation avec un message pré-rempli.
-      </p>
-    </>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Réglages e-mail (SMTP + file d'attente)                             */
 /* ------------------------------------------------------------------ */
-function MailSettingsControl() {
+export function MailSettingsControl() {
   const [cfg, setCfg] = useState<Record<string, unknown> | null>(null);
   const [stats, setStats] = useState<{ queued: number; sent: number; failed: number; lastErrors: Array<{ to_email: string; error: string }> } | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -1281,13 +1143,13 @@ const TITLES: Record<string, string> = {
   history: '🕘 Historique des versions',
 };
 
-// panneaux accessibles hors mode édition (consultation admin)
-const ADMIN_PANELS = ['reservations', 'mailSettings'];
-
 export default function SidePanel() {
   const { editMode, selected, select, site } = useEdit();
   if (!selected) return null;
-  if (!editMode && !ADMIN_PANELS.includes(selected.kind)) return null;
+  // Réservations & réglages e-mail sont désormais des pages principales (barre latérale).
+  if (selected.kind === 'reservations' || selected.kind === 'analytics' || selected.kind === 'mailSettings')
+    return null;
+  if (!editMode) return null;
   // L'élément peut avoir disparu (annulation, suppression…)
   if (selected.path && getAtPath(site, selected.path) === undefined) {
     return null;
@@ -1320,10 +1182,6 @@ export default function SidePanel() {
         return <LinkControl path={selected.path} />;
       case 'nav':
         return <NavControl />;
-      case 'reservations':
-        return <ReservationsControl />;
-      case 'mailSettings':
-        return <MailSettingsControl />;
       case 'addSection':
         return <AddSectionControl />;
       case 'history':

@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   }
   const { rows } = await pool.query(
     `SELECT id, name, email, phone, service, to_char(date, 'YYYY-MM-DD') AS date, slot, message, status, created_at
-     FROM reservations ORDER BY date DESC, slot DESC LIMIT 200`,
+     FROM reservations ORDER BY created_at DESC NULLS LAST LIMIT 200`,
   );
   return NextResponse.json({ reservations: rows });
 }
