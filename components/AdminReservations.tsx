@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEdit } from './EditContext';
+import { BookingAvailability } from './controls/panels';
 
 type Status = 'pending' | 'confirmed' | 'cancelled';
 type Reservation = {
@@ -39,13 +40,21 @@ const DESC_FIRST: SortKey[] = ['date', 'created_at'];
 const PAGE_SIZES = [10, 25, 50];
 
 export default function AdminReservations() {
-  const { site } = useEdit();
+  const { site, save, saving, dirty } = useEdit();
   const router = useRouter();
   const [list, setList] = useState<Reservation[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [busy, setBusy] = useState<number | null>(null);
   const [tab, setTab] = useState<'all' | Status>('all');
   const [query, setQuery] = useState('');
+  const [showAvail, setShowAvail] = useState(false);
+
+  // Index de la section « réservation » dans le document du site : c'est là que
+  // vivent les disponibilités (planning, créneaux, exceptions) proposées aux clients.
+  const bookingIdx = useMemo(
+    () => site.page.sections.findIndex((s) => s.type === 'booking'),
+    [site.page.sections],
+  );
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({
@@ -190,6 +199,55 @@ export default function AdminReservations() {
           ✉️ Réglages e-mail
         </button>
       </div>
+
+      {bookingIdx >= 0 && (
+        <div className="wl-avail">
+          <button
+            type="button"
+            className="wl-avail-head"
+            onClick={() => setShowAvail((v) => !v)}
+            aria-expanded={showAvail}
+          >
+            <span>
+              <span aria-hidden style={{ marginRight: 8 }}>
+                🗓️
+              </span>
+              Disponibilités — jours &amp; créneaux proposés aux clients
+            </span>
+            <span className="wl-avail-chevron" aria-hidden>
+              {showAvail ? '▲' : '▼'}
+            </span>
+          </button>
+          {showAvail && (
+            <div className="wl-avail-body">
+              <p className="wl-hint" style={{ marginBottom: 14 }}>
+                Ces réglages déterminent les dates et heures que vos clients peuvent choisir sur le
+                site. Cliquez « Enregistrer » pour les appliquer immédiatement.
+              </p>
+              <BookingAvailability path={`page.sections.${bookingIdx}`} />
+              <div className="wl-avail-save">
+                <button
+                  type="button"
+                  className="wl-btn wl-btn-primary"
+                  disabled={saving === 'saving' || !dirty}
+                  onClick={() => void save()}
+                >
+                  {saving === 'saving'
+                    ? 'Enregistrement…'
+                    : saving === 'saved'
+                      ? '✓ Enregistré'
+                      : saving === 'error'
+                        ? '⚠ Réessayer'
+                        : '💾 Enregistrer les disponibilités'}
+                </button>
+                {dirty && saving === 'idle' && (
+                  <span className="wl-hint">Modifications non enregistrées</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="wl-rez-tabs">
         {TABS.map((t) => (

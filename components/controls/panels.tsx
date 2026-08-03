@@ -694,7 +694,6 @@ function BookingExtras({ path }: { path: string }) {
   const { site, update, arrayOp } = useEdit();
   const data = getAtPath(site, `${path}.data`) as any;
   if (!data) return null;
-  const schedule: Array<{ on: boolean; start: string; end: string }> = data.schedule ?? [];
   const services: string[] = data.services ?? [];
   return (
     <>
@@ -731,6 +730,26 @@ function BookingExtras({ path }: { path: string }) {
           ＋ Ajouter un service
         </button>
       </Field>
+      <BookingAvailability path={path} />
+      <p className="wl-hint" style={{ marginBottom: 14 }}>
+        Pensez à « Enregistrer » : les créneaux proposés aux visiteurs suivent ces réglages.
+      </p>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Disponibilités : durée de créneau, fenêtre, préavis, planning        */
+/* hebdomadaire et exceptions. Réutilisé sur la page Réservations       */
+/* de l'admin pour éviter de passer par l'éditeur de site.              */
+/* ------------------------------------------------------------------ */
+export function BookingAvailability({ path }: { path: string }) {
+  const { site, update } = useEdit();
+  const data = getAtPath(site, `${path}.data`) as any;
+  if (!data) return null;
+  const schedule: Array<{ on: boolean; start: string; end: string }> = data.schedule ?? [];
+  return (
+    <>
       <Field label="Durée d'un créneau (minutes — libre)">
         <div className="wl-row" style={{ marginBottom: 8 }}>
           {[15, 30, 45, 60, 90, 120].map((m) => (
@@ -784,9 +803,6 @@ function BookingExtras({ path }: { path: string }) {
         })}
       </Field>
       <DateOverridesEditor path={path} />
-      <p className="wl-hint" style={{ marginBottom: 14 }}>
-        Pensez à « Enregistrer » : les créneaux proposés aux visiteurs suivent ces réglages.
-      </p>
     </>
   );
 }

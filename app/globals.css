@@ -1469,3 +1469,48 @@ select option {
   font-size: 13px;
   color: #e2e2ea;
 }
+
+/* ---- Panneau « Disponibilités » (page Réservations) ---- */
+.wl-avail {
+  border: 1px solid #23232c;
+  border-radius: 14px;
+  background: #0f0f14;
+  margin-bottom: 22px;
+  overflow: hidden;
+}
+.wl-avail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 15px 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--c-text, #e9e9ef);
+  font-family: var(--f-heading);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: left;
+  transition: background 0.18s ease;
+}
+.wl-avail-head:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.wl-avail-chevron {
+  color: var(--c-muted, #8a8a97);
+  font-size: 12px;
+}
+.wl-avail-body {
+  padding: 4px 18px 20px;
+  border-top: 1px solid #23232c;
+}
+.wl-avail-save {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #23232c;
+}
