@@ -35,6 +35,15 @@ export const DEFAULT_BOOKING_CONFIG: BookingConfig = {
   ],
 };
 
+/** Tranches de budget marketing proposées par défaut (modifiables dans l'éditeur). */
+export const DEFAULT_BUDGETS = [
+  'Moins de 500 DT / mois',
+  '500 – 1 000 DT / mois',
+  '1 000 – 3 000 DT / mois',
+  'Plus de 3 000 DT / mois',
+  'À définir ensemble',
+];
+
 const toMin = (hhmm: string): number => {
   const [h, m] = hhmm.split(':').map(Number);
   return (h || 0) * 60 + (m || 0);

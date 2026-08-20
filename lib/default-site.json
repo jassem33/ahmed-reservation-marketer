@@ -407,6 +407,13 @@
             "Création de contenu",
             "Site web"
           ],
+          "budgets": [
+            "Moins de 500 DT / mois",
+            "500 – 1 000 DT / mois",
+            "1 000 – 3 000 DT / mois",
+            "Plus de 3 000 DT / mois",
+            "À définir ensemble"
+          ],
           "slotMinutes": 60,
           "daysAhead": 30,
           "minNoticeHours": 12,

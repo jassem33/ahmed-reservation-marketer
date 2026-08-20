@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ pending: rows[0].n });
   }
   const { rows } = await pool.query(
-    `SELECT id, name, email, phone, service, to_char(date, 'YYYY-MM-DD') AS date, slot, message, status, created_at
+    `SELECT id, name, email, phone, service, to_char(date, 'YYYY-MM-DD') AS date, slot, message,
+            social_link, budget, status, created_at
      FROM reservations ORDER BY created_at DESC NULLS LAST LIMIT 200`,
   );
   return NextResponse.json({ reservations: rows });
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
   if (!body || typeof body !== 'object') {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 });
   }
-  const { name, email, phone, service, date, slot, message, website } = body as Record<string, unknown>;
+  const { name, email, phone, service, date, slot, message, social, budget, website } =
+    body as Record<string, unknown>;
   // pot de miel anti-robots : le champ caché doit rester vide
   if (website) return NextResponse.json({ ok: true });
 
@@ -55,6 +57,28 @@ export async function POST(req: NextRequest) {
   if (!isValidDateStr(dateS) || !isValidSlot(slotS)) {
     return NextResponse.json({ error: 'Date ou créneau invalide' }, { status: 400 });
   }
+  // Lien de la page à promouvoir : obligatoire, on tolère l'absence de « https:// »
+  const socialRaw = String(social ?? '').trim();
+  if (!socialRaw) {
+    return NextResponse.json(
+      { error: 'Le lien de votre page Facebook ou Instagram est obligatoire' },
+      { status: 400 },
+    );
+  }
+  const socialS = /^https?:\/\//i.test(socialRaw) ? socialRaw : `https://${socialRaw}`;
+  let socialHost: string;
+  try {
+    socialHost = new URL(socialS).hostname;
+  } catch {
+    return NextResponse.json({ error: 'Lien de page invalide' }, { status: 400 });
+  }
+  if (!/(^|\.)((facebook|fb)\.(com|me)|instagram\.com|fb\.watch|instagr\.am)$/i.test(socialHost)) {
+    return NextResponse.json(
+      { error: 'Indiquez un lien de page Facebook ou Instagram' },
+      { status: 400 },
+    );
+  }
+  const budgetS = String(budget ?? '').trim().slice(0, 120);
 
   const site = await getSite();
   const booking = site.page.sections.find((s) => s.type === 'booking');
@@ -72,9 +96,19 @@ export async function POST(req: NextRequest) {
   let id: number;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO reservations (name, email, phone, service, date, slot, message)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [nameS, emailS, phoneS, String(service ?? '').slice(0, 200), dateS, slotS, String(message ?? '').slice(0, 2000)],
+      `INSERT INTO reservations (name, email, phone, service, date, slot, message, social_link, budget)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [
+        nameS,
+        emailS,
+        phoneS,
+        String(service ?? '').slice(0, 200),
+        dateS,
+        slotS,
+        String(message ?? '').slice(0, 2000),
+        socialS.slice(0, 500),
+        budgetS,
+      ],
     );
     id = rows[0].id;
   } catch (e: unknown) {
@@ -93,7 +127,9 @@ export async function POST(req: NextRequest) {
     ['Heure', slotS],
     ['Nom', nameS],
     ['WhatsApp', phoneS],
+    ['Page à promouvoir', socialS],
   ];
+  if (budgetS) details.push(['Budget marketing', budgetS]);
   if (emailS) {
     await queueMail(
       emailS,
@@ -140,7 +176,9 @@ export async function POST(req: NextRequest) {
     `• Service : ${String(service ?? '—')}`,
     `• Date : ${frDate(dateS)} à ${slotS}`,
     `• Téléphone : ${phoneS}`,
+    `• Page : ${socialS}`,
   ];
+  if (budgetS) lines.push(`• Budget marketing : ${budgetS}`);
   if (emailS) lines.push(`• E-mail : ${emailS}`);
   const msgTrim = String(message ?? '').trim();
   if (msgTrim) lines.push(`• Message : ${msgTrim}`);

@@ -1,4 +1,5 @@
 import type { Section, SectionType } from './types';
+import { DEFAULT_BUDGETS } from './booking';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -100,6 +101,7 @@ const DATA_TEMPLATES: Record<SectionType, () => any> = {
     title: { text: 'Réservez votre créneau' },
     subtitle: { text: 'Choisissez un service, une date et une heure — confirmation par e-mail et WhatsApp.' },
     services: ['Consultation gratuite', 'Sponsoring Meta Ads', 'Création de contenu', 'Site web'],
+    budgets: [...DEFAULT_BUDGETS],
     slotMinutes: 60,
     daysAhead: 30,
     minNoticeHours: 12,

@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import type { ImageNode, SectionType, TextNode, Theme, VideoNode } from '@/lib/types';
 import { getAtPath } from '@/lib/path';
+import { DEFAULT_BUDGETS } from '@/lib/booking';
 import { newSection, SECTION_LABELS } from '@/lib/templates';
 import { SOCIAL_KINDS } from '../icons';
 import { SERVICE_ICON_KEYS, ServiceIcon, serviceIconLabel } from '../service-icons';
@@ -695,6 +696,7 @@ function BookingExtras({ path }: { path: string }) {
   const data = getAtPath(site, `${path}.data`) as any;
   if (!data) return null;
   const services: string[] = data.services ?? [];
+  const budgets: string[] = data.budgets ?? DEFAULT_BUDGETS;
   return (
     <>
       <Field label="Numéro WhatsApp (international)">
@@ -728,6 +730,27 @@ function BookingExtras({ path }: { path: string }) {
         ))}
         <button type="button" className="wl-btn" onClick={() => arrayOp(`${path}.data.services`, 'insert', services.length, 'Nouveau service')}>
           ＋ Ajouter un service
+        </button>
+      </Field>
+      <Field label="Tranches de budget marketing (champ facultatif du formulaire)">
+        {budgets.map((b, j) => (
+          <div key={j} className="wl-row" style={{ marginBottom: 6 }}>
+            <input className="wl-input" style={{ flex: 1 }} value={b} onChange={(e) => update(`${path}.data.budgets.${j}`, e.target.value)} />
+            <button type="button" className="wl-btn wl-btn-danger" onClick={() => arrayOp(`${path}.data.budgets`, 'remove', j)}>
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="wl-btn"
+          onClick={() =>
+            data.budgets
+              ? arrayOp(`${path}.data.budgets`, 'insert', budgets.length, 'Nouvelle tranche')
+              : update(`${path}.data.budgets`, [...DEFAULT_BUDGETS, 'Nouvelle tranche'])
+          }
+        >
+          ＋ Ajouter une tranche
         </button>
       </Field>
       <BookingAvailability path={path} />

@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Section, TextNode } from '@/lib/types';
+import { DEFAULT_BUDGETS } from '@/lib/booking';
 import { useEdit } from './EditContext';
 import { T } from './atoms';
 import { SocialIcon } from './icons';
@@ -20,10 +21,14 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
     whatsappBtnLabel?: TextNode;
     daysAhead?: number;
     minNoticeHours?: number;
+    budgets?: string[];
   };
   const services = d.services ?? [];
+  const budgets = d.budgets?.length ? d.budgets : DEFAULT_BUDGETS;
 
   const [service, setService] = useState(services[0] ?? '');
+  const [social, setSocial] = useState('');
+  const [budget, setBudget] = useState('');
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState<string[] | null>(null);
   const [slot, setSlot] = useState('');
@@ -70,7 +75,7 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
       const res = await fetch('/api/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service, date, slot, name, email, phone, message }),
+        body: JSON.stringify({ service, date, slot, name, email, phone, message, social, budget }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Une erreur est survenue');
@@ -235,6 +240,34 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
           <div>
             {label('WhatsApp')}
             <input type="tel" style={inputStyle} value={phone} disabled={editMode} onChange={(e) => setPhone(e.target.value)} required placeholder="+216 …" />
+          </div>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            {label('Page Facebook ou Instagram')}
+            <input
+              type="url"
+              style={inputStyle}
+              value={social}
+              disabled={editMode}
+              onChange={(e) => setSocial(e.target.value)}
+              required
+              placeholder="https://facebook.com/votre-page"
+            />
+            <p className="mt-1.5 text-xs" style={{ color: 'var(--c-muted)' }}>
+              Le lien de votre page à promouvoir — obligatoire.
+            </p>
+          </div>
+          <div>
+            {label('Budget marketing (facultatif)')}
+            <select style={inputStyle} value={budget} disabled={editMode} onChange={(e) => setBudget(e.target.value)}>
+              <option value="">— Non précisé —</option>
+              {budgets.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <div>

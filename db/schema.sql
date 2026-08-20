@@ -35,6 +35,11 @@ CREATE TABLE IF NOT EXISTS reservations (
 CREATE UNIQUE INDEX IF NOT EXISTS reservations_slot_uniq
   ON reservations (date, slot) WHERE status <> 'cancelled';
 
+-- Ajouts après la première version : lien de la page Facebook/Instagram (obligatoire
+-- côté formulaire) et budget marketing envisagé (facultatif).
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS social_link TEXT;
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS budget TEXT;
+
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL,

@@ -15,6 +15,8 @@ type Reservation = {
   date: string;
   slot: string;
   message: string | null;
+  social_link: string | null;
+  budget: string | null;
   status: Status;
   created_at: string;
 };
@@ -124,7 +126,7 @@ export default function AdminReservations() {
     const q = query.trim().toLowerCase();
     if (!q) return byTab;
     return byTab.filter((r) =>
-      [r.name, r.email, r.phone, r.service, r.message]
+      [r.name, r.email, r.phone, r.service, r.message, r.social_link, r.budget]
         .filter(Boolean)
         .some((f) => String(f).toLowerCase().includes(q)),
     );
@@ -308,6 +310,7 @@ export default function AdminReservations() {
                 {sortTh('name', 'Client')}
                 <th>Contact</th>
                 {sortTh('service', 'Service')}
+                <th>Page &amp; budget</th>
                 {sortTh('date', 'Date & heure')}
                 {sortTh('created_at', 'Reçue le')}
                 {sortTh('status', 'Statut')}
@@ -334,6 +337,22 @@ export default function AdminReservations() {
                       <div className="wl-td-sub">{r.phone}</div>
                     </td>
                     <td>{r.service || '—'}</td>
+                    <td>
+                      {r.social_link ? (
+                        <a
+                          href={r.social_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="wl-td-strong"
+                          style={{ textDecoration: 'underline', wordBreak: 'break-all', maxWidth: 200, display: 'inline-block' }}
+                        >
+                          {r.social_link.replace(/^https?:\/\/(www\.)?/i, '')}
+                        </a>
+                      ) : (
+                        <span className="wl-td-sub">—</span>
+                      )}
+                      <div className="wl-td-sub">{r.budget || 'budget non précisé'}</div>
+                    </td>
                     <td>
                       <div className="wl-td-strong">{frDay(r.date)}</div>
                       <div className="wl-td-sub">{r.slot}</div>
