@@ -9,7 +9,7 @@
  * Usage (dans le conteneur app) : node scripts/media-to-disk.mjs
  */
 import { readFileSync } from 'node:fs';
-import { mkdir, writeFile, stat, unlink } from 'node:fs/promises';
+import { mkdir, open, stat, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import pg from 'pg';
@@ -28,6 +28,34 @@ try {
 const MEDIA_DIR = process.env.MEDIA_DIR || path.join(root, 'media-store');
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
+/* Lecture par tranches de 8 Mo plutôt qu'en un seul `SELECT data`.
+ * Un `SELECT` complet sur une vidéo de 116 Mo fait grimper le processus à
+ * ~1,2 Go (le pilote pg recopie plusieurs fois le tampon) : sur ce serveur de
+ * 2 Go le noyau a déjà tué next-server pour cette raison. Ici la mémoire reste
+ * plate quelle que soit la taille du média. */
+const CHUNK = 8 * 1024 * 1024;
+
+async function copyToDisk(id, dest) {
+  const fh = await open(dest, 'w');
+  try {
+    let written = 0;
+    for (;;) {
+      const { rows } = await pool.query(
+        'SELECT substring(data FROM $2 FOR $3) AS chunk FROM media WHERE id = $1',
+        [id, written + 1, CHUNK],
+      );
+      const chunk = rows[0]?.chunk;
+      if (!chunk || chunk.length === 0) break;
+      await fh.write(chunk);
+      written += chunk.length;
+      if (chunk.length < CHUNK) break;
+    }
+    return written;
+  } finally {
+    await fh.close();
+  }
+}
+
 await mkdir(MEDIA_DIR, { recursive: true });
 
 const { rows: todo } = await pool.query(
@@ -40,18 +68,20 @@ let skipped = 0;
 for (const row of todo) {
   const dest = path.join(MEDIA_DIR, row.id);
   try {
-    // Une ligne à la fois : jamais plus d'un média en mémoire.
-    const { rows } = await pool.query('SELECT data FROM media WHERE id = $1', [row.id]);
-    const buf = rows[0]?.data;
-    if (!buf) {
-      console.warn(`⚠ ${row.id} (${row.filename}) : contenu introuvable, ignoré`);
+    const written = await copyToDisk(row.id, dest);
+    if (written === 0) {
+      await unlink(dest).catch(() => {});
+      console.warn(`⚠ ${row.id} (${row.filename}) : contenu vide, laissé en base`);
       skipped++;
       continue;
     }
-    await writeFile(dest, buf);
     const onDisk = (await stat(dest)).size;
-    if (onDisk !== buf.length) {
-      throw new Error(`taille écrite ${onDisk} ≠ attendue ${buf.length}`);
+    if (onDisk !== written) {
+      throw new Error(`taille sur disque ${onDisk} ≠ octets copiés ${written}`);
+    }
+    // Une métadonnée fausse n'invalide pas la copie : on la recale (UPDATE plus bas).
+    if (onDisk !== Number(row.size)) {
+      console.warn(`  ⚠ size_bytes annoncé ${row.size}, réel ${onDisk} — recalé`);
     }
     // `size_bytes` est recalé si la métadonnée était fausse.
     await pool.query('UPDATE media SET data = NULL, size_bytes = $2 WHERE id = $1', [row.id, onDisk]);
