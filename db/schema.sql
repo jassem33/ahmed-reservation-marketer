@@ -62,9 +62,14 @@ CREATE TABLE IF NOT EXISTS media (
   filename TEXT NOT NULL,
   mime TEXT NOT NULL,
   size_bytes BIGINT NOT NULL,
-  data BYTEA NOT NULL,
+  data BYTEA,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Les médias vivent désormais sur disque (volume `media-data`, voir lib/media.ts) :
+-- `data` reste NULL pour les nouveaux, et NON NULL pour les médias historiques
+-- pas encore déplacés par scripts/media-to-disk.mjs.
+ALTER TABLE media ALTER COLUMN data DROP NOT NULL;
 
 -- Suivi des visiteurs (pages vues, clics, profondeur de défilement)
 CREATE TABLE IF NOT EXISTS analytics_events (

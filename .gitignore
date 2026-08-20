@@ -46,3 +46,6 @@ next-env.d.ts
 # sauvegardes locales (incluses dans le zip, pas dans git)
 /backup/
 *.dump
+
+# médias stockés sur disque (volume Docker en production)
+/media-store/

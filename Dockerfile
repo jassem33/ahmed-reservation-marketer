@@ -30,12 +30,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # Initialisation de la base (schéma + contenu par défaut, idempotent)
 COPY --from=builder --chown=nextjs:nodejs /app/db ./db
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/seed.mjs ./scripts/seed.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/media-to-disk.mjs ./scripts/media-to-disk.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/lib/default-site.json ./lib/default-site.json
 # bcryptjs n'est pas tracé dans la sortie standalone (il est intégré au bundle
 # de la route de connexion) ; seed.mjs en a besoin au runtime → on le copie.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/bcryptjs ./node_modules/bcryptjs
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./
 RUN chmod +x docker-entrypoint.sh
+
+# Point de montage des médias : créé (et possédé par nextjs) dans l'image pour
+# que le volume nommé hérite des bons droits à sa première initialisation.
+RUN mkdir -p /app/media-store && chown nextjs:nodejs /app/media-store
+ENV MEDIA_DIR=/app/media-store
 
 USER nextjs
 EXPOSE 3000

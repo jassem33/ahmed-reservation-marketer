@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unlink, writeFile } from 'node:fs/promises';
 import { pool } from '@/lib/db';
 import { currentAdmin } from '@/lib/auth';
+import { ensureMediaDir, mediaPath } from '@/lib/media';
 
 const MAX_BYTES = 300 * 1024 * 1024; // 300 Mo
 
@@ -21,9 +23,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Fichier trop volumineux (max 300 Mo)' }, { status: 413 });
   }
   const buf = Buffer.from(await file.arrayBuffer());
+
+  // La base ne garde que les métadonnées ; le contenu part sur le disque
+  // (voir lib/media.ts). `data` reste NULL pour les nouveaux médias.
   const { rows } = await pool.query(
-    'INSERT INTO media (filename, mime, size_bytes, data) VALUES ($1, $2, $3, $4) RETURNING id',
-    [file.name || 'fichier', mime, buf.length, buf],
+    'INSERT INTO media (filename, mime, size_bytes) VALUES ($1, $2, $3) RETURNING id',
+    [file.name || 'fichier', mime, buf.length],
   );
-  return NextResponse.json({ id: rows[0].id, url: `/api/media/${rows[0].id}` });
+  const id: string = rows[0].id;
+  try {
+    await ensureMediaDir();
+    await writeFile(mediaPath(id), buf);
+  } catch (e) {
+    // Pas de ligne orpheline pointant vers un fichier absent.
+    await pool.query('DELETE FROM media WHERE id = $1', [id]).catch(() => {});
+    await unlink(mediaPath(id)).catch(() => {});
+    console.error('Écriture du média impossible', e);
+    return NextResponse.json({ error: "Le fichier n'a pas pu être enregistré" }, { status: 500 });
+  }
+  return NextResponse.json({ id, url: `/api/media/${id}` });
 }

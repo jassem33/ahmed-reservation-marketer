@@ -25,6 +25,11 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?définissez ADMIN_PASSWORD dans .env}
       TZ: ${TZ:-Africa/Tunis}
+      MEDIA_DIR: /app/media-store
+    volumes:
+      # Images et vidéos : sur disque plutôt qu'en base, pour que les dumps
+      # quotidiens restent légers (voir lib/media.ts).
+      - media-data:/app/media-store
     depends_on:
       db:
         condition: service_healthy
@@ -57,3 +62,4 @@ services:
 
 volumes:
   db-data:
+  media-data:
