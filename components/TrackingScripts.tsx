@@ -1,6 +1,6 @@
 import Script from 'next/script';
 
-/** Meta Pixel + Google Analytics 4.
+/** Meta Pixel + Google Analytics 4 + OpenAI Ads pixel.
  *
  *  Rendu uniquement sur la page publique (pas dans le layout racine) pour que
  *  les visites de l'administration ne polluent pas les statistiques.
@@ -8,6 +8,8 @@ import Script from 'next/script';
  */
 const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '2128781854394156';
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-8EVGBH43H1';
+const OPENAI_PIXEL_ID =
+  process.env.NEXT_PUBLIC_OPENAI_PIXEL_ID || 'VY9e5eF93NBqE48JeSTqV8';
 
 export default function TrackingScripts() {
   return (
@@ -38,6 +40,14 @@ fbq('track', 'PageView');`}
             />
           </noscript>
         </>
+      )}
+
+      {/* OpenAI Ads pixel */}
+      {OPENAI_PIXEL_ID && (
+        <Script id="openai-pixel" strategy="afterInteractive">
+          {`!function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
+oaiq('init', { pixelId: '${OPENAI_PIXEL_ID}', debug: ${process.env.NODE_ENV !== 'production'} });`}
+        </Script>
       )}
 
       {/* Google tag (gtag.js) */}
