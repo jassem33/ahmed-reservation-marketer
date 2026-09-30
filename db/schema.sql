@@ -39,6 +39,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS reservations_slot_uniq
 -- côté formulaire) et budget marketing envisagé (facultatif).
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS social_link TEXT;
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS budget TEXT;
+-- Domaine d'activité du client (liste + « Autre : … » saisi librement)
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS domain TEXT;
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,

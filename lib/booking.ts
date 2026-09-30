@@ -36,6 +36,24 @@ export const DEFAULT_BOOKING_CONFIG: BookingConfig = {
 };
 
 /** Tranches de budget marketing proposées par défaut (modifiables dans l'éditeur). */
+/** Domaines d'activité proposés par défaut (modifiables dans l'éditeur).
+ *  Le dernier choix « Autre » ouvre un champ libre. */
+export const DEFAULT_DOMAINS = [
+  'E-commerce',
+  'Éducation / formation',
+  'Restauration',
+  'Santé / bien-être',
+  'Immobilier',
+  'Mode & beauté',
+  'Services',
+  'Autre',
+];
+
+/** Le choix qui déclenche la saisie libre (fr / en / ar). */
+export function isOtherDomain(v: string): boolean {
+  return /^(autre|other|أخرى|غير ذلك)/i.test(v.trim());
+}
+
 export const DEFAULT_BUDGETS = [
   'Moins de 500 DT / mois',
   '500 – 1 000 DT / mois',

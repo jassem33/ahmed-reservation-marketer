@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEdit } from './EditContext';
 import { BookingAvailability } from './controls/panels';
+import FeedLink from './FeedLink';
 
 type Status = 'pending' | 'confirmed' | 'cancelled';
 type Reservation = {
@@ -17,6 +18,7 @@ type Reservation = {
   message: string | null;
   social_link: string | null;
   budget: string | null;
+  domain: string | null;
   status: Status;
   created_at: string;
 };
@@ -126,7 +128,7 @@ export default function AdminReservations() {
     const q = query.trim().toLowerCase();
     if (!q) return byTab;
     return byTab.filter((r) =>
-      [r.name, r.email, r.phone, r.service, r.message, r.social_link, r.budget]
+      [r.name, r.email, r.phone, r.service, r.message, r.social_link, r.budget, r.domain]
         .filter(Boolean)
         .some((f) => String(f).toLowerCase().includes(q)),
     );
@@ -251,6 +253,8 @@ export default function AdminReservations() {
         </div>
       )}
 
+      <FeedLink />
+
       <div className="wl-rez-tabs">
         {TABS.map((t) => (
           <button
@@ -336,7 +340,10 @@ export default function AdminReservations() {
                       <div>{r.email || <span className="wl-td-sub">— pas d'e-mail</span>}</div>
                       <div className="wl-td-sub">{r.phone}</div>
                     </td>
-                    <td>{r.service || '—'}</td>
+                    <td>
+                      <div>{r.service || '—'}</div>
+                      {r.domain ? <div className="wl-td-sub">{r.domain}</div> : null}
+                    </td>
                     <td>
                       {r.social_link ? (
                         <a

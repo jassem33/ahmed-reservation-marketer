@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Section, TextNode } from '@/lib/types';
-import { DEFAULT_BUDGETS } from '@/lib/booking';
+import { DEFAULT_BUDGETS, DEFAULT_DOMAINS, isOtherDomain } from '@/lib/booking';
 import { useEdit } from './EditContext';
 import { T } from './atoms';
 import { SocialIcon } from './icons';
@@ -11,7 +11,7 @@ import { SocialIcon } from './icons';
 type Status = 'idle' | 'sending' | 'done' | 'error';
 
 export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
-  const { editMode } = useEdit();
+  const { editMode, t } = useEdit();
   const p = `page.sections.${i}.data`;
   const d = sec.data as {
     services?: string[];
@@ -22,13 +22,17 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
     daysAhead?: number;
     minNoticeHours?: number;
     budgets?: string[];
+    domains?: string[];
   };
   const services = d.services ?? [];
   const budgets = d.budgets?.length ? d.budgets : DEFAULT_BUDGETS;
+  const domains = d.domains?.length ? d.domains : DEFAULT_DOMAINS;
 
   const [service, setService] = useState(services[0] ?? '');
   const [social, setSocial] = useState('');
   const [budget, setBudget] = useState('');
+  const [domain, setDomain] = useState(domains[0] ?? '');
+  const [domainOther, setDomainOther] = useState('');
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState<string[] | null>(null);
   const [slot, setSlot] = useState('');
@@ -75,16 +79,16 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
       const res = await fetch('/api/reservations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service, date, slot, name, email, phone, message, social, budget }),
+        body: JSON.stringify({ service, date, slot, name, email, phone, message, social, budget, domain, domainOther }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Une erreur est survenue');
+      if (!res.ok) throw new Error(data.error || t.genericError);
       setWaUrl(data.whatsapp ?? null);
       setStatus('done');
       // redirige automatiquement vers WhatsApp avec le récapitulatif pré-rempli
       if (data.whatsapp) window.location.href = data.whatsapp;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      setError(err instanceof Error ? err.message : t.genericError);
       setStatus('error');
       if (date) void loadSlots(date);
     }
@@ -170,7 +174,7 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
         <input type="text" name="website" tabIndex={-1} autoComplete="off" style={{ display: 'none' }} readOnly />
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            {label('Service')}
+            {label(t.service)}
             <select style={inputStyle} value={service} disabled={editMode} onChange={(e) => setService(e.target.value)}>
               {services.map((s) => (
                 <option key={s} value={s}>
@@ -180,7 +184,7 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
             </select>
           </div>
           <div>
-            {label('Date')}
+            {label(t.date)}
             <input
               type="date"
               style={inputStyle}
@@ -195,14 +199,14 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
         </div>
         {date && (
           <div>
-            {label('Heure')}
+            {label(t.time)}
             {slots === null ? (
               <p className="text-sm" style={{ color: 'var(--c-muted)' }}>
-                Chargement des créneaux…
+                {t.loadingSlots}
               </p>
             ) : slots.length === 0 ? (
               <p className="text-sm" style={{ color: 'var(--c-muted)' }}>
-                Aucun créneau disponible ce jour — essayez une autre date.
+                {t.noSlots}
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -230,21 +234,48 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
         )}
         <div className="grid gap-5 sm:grid-cols-3">
           <div>
-            {label('Nom complet')}
-            <input style={inputStyle} value={name} disabled={editMode} onChange={(e) => setName(e.target.value)} required minLength={2} placeholder="Votre nom" />
+            {label(t.fullName)}
+            <input style={inputStyle} value={name} disabled={editMode} onChange={(e) => setName(e.target.value)} required minLength={2} placeholder={t.namePlaceholder} />
           </div>
           <div>
-            {label('E-mail (facultatif)')}
+            {label(t.emailOptional)}
             <input type="email" style={inputStyle} value={email} disabled={editMode} onChange={(e) => setEmail(e.target.value)} placeholder="vous@email.com" />
           </div>
           <div>
-            {label('WhatsApp')}
+            {label(t.whatsapp)}
             <input type="tel" style={inputStyle} value={phone} disabled={editMode} onChange={(e) => setPhone(e.target.value)} required placeholder="+216 …" />
           </div>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            {label('Page Facebook ou Instagram')}
+            {label(t.domain)}
+            <select style={inputStyle} value={domain} disabled={editMode} required onChange={(e) => setDomain(e.target.value)}>
+              {domains.map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+          {isOtherDomain(domain) && (
+            <div>
+              {label(t.domainOther)}
+              <input
+                style={inputStyle}
+                value={domainOther}
+                disabled={editMode}
+                required
+                minLength={2}
+                maxLength={120}
+                placeholder={t.domainOtherPlaceholder}
+                onChange={(e) => setDomainOther(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <div>
+            {label(t.socialPage)}
             <input
               type="url"
               style={inputStyle}
@@ -255,13 +286,13 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
               placeholder="https://facebook.com/votre-page"
             />
             <p className="mt-1.5 text-xs" style={{ color: 'var(--c-muted)' }}>
-              Le lien de votre page à promouvoir — obligatoire.
+              {t.socialHint}
             </p>
           </div>
           <div>
-            {label('Budget marketing (facultatif)')}
+            {label(t.budget)}
             <select style={inputStyle} value={budget} disabled={editMode} onChange={(e) => setBudget(e.target.value)}>
-              <option value="">— Non précisé —</option>
+              <option value="">{t.budgetNone}</option>
               {budgets.map((b) => (
                 <option key={b} value={b}>
                   {b}
@@ -271,8 +302,8 @@ export default function BookingForm({ sec, i }: { sec: Section; i: number }) {
           </div>
         </div>
         <div>
-          {label('Message (facultatif)')}
-          <textarea style={{ ...inputStyle, resize: 'vertical' }} rows={3} value={message} disabled={editMode} onChange={(e) => setMessage(e.target.value)} placeholder="Précisez votre besoin…" />
+          {label(t.message)}
+          <textarea style={{ ...inputStyle, resize: 'vertical' }} rows={3} value={message} disabled={editMode} onChange={(e) => setMessage(e.target.value)} placeholder={t.messagePlaceholder} />
         </div>
         {error && (
           <p className="text-sm" style={{ color: '#ff8585' }}>

@@ -26,6 +26,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?définissez ADMIN_PASSWORD dans .env}
       TZ: ${TZ:-Africa/Tunis}
       MEDIA_DIR: /app/media-store
+      OPENAI_ADS_API_KEY: ${OPENAI_ADS_API_KEY:-}
+      NEXT_PUBLIC_OPENAI_PIXEL_ID: ${NEXT_PUBLIC_OPENAI_PIXEL_ID:-VY9e5eF93NBqE48JeSTqV8}
     volumes:
       # Images et vidéos : sur disque plutôt qu'en base, pour que les dumps
       # quotidiens restent légers (voir lib/media.ts).

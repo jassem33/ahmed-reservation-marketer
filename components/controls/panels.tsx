@@ -4,13 +4,14 @@
 import { useEffect, useState } from 'react';
 import type { ImageNode, SectionType, TextNode, Theme, VideoNode } from '@/lib/types';
 import { getAtPath } from '@/lib/path';
-import { DEFAULT_BUDGETS } from '@/lib/booking';
+import { DEFAULT_BUDGETS, DEFAULT_DOMAINS } from '@/lib/booking';
 import { newSection, SECTION_LABELS } from '@/lib/templates';
 import { SOCIAL_KINDS } from '../icons';
 import { SERVICE_ICON_KEYS, ServiceIcon, serviceIconLabel } from '../service-icons';
 import { mediaUrl } from '../atoms';
 import { useEdit } from '../EditContext';
 import { AlignPicker, ColorInput, Field, FileButton, FontSelect, Slider, WeightSelect } from './basic';
+import I18nControl from './i18n';
 
 /* ------------------------------------------------------------------ */
 /* Texte                                                               */
@@ -697,6 +698,7 @@ function BookingExtras({ path }: { path: string }) {
   if (!data) return null;
   const services: string[] = data.services ?? [];
   const budgets: string[] = data.budgets ?? DEFAULT_BUDGETS;
+  const domains: string[] = data.domains ?? DEFAULT_DOMAINS;
   return (
     <>
       <Field label="Numéro WhatsApp (international)">
@@ -752,6 +754,30 @@ function BookingExtras({ path }: { path: string }) {
         >
           ＋ Ajouter une tranche
         </button>
+      </Field>
+      <Field label="Domaines d'activité (champ obligatoire du formulaire)">
+        {domains.map((b, j) => (
+          <div key={j} className="wl-row" style={{ marginBottom: 6 }}>
+            <input className="wl-input" style={{ flex: 1 }} value={b} onChange={(e) => update(`${path}.data.domains.${j}`, e.target.value)} />
+            <button type="button" className="wl-btn wl-btn-danger" onClick={() => arrayOp(`${path}.data.domains`, 'remove', j)}>
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="wl-btn"
+          onClick={() =>
+            data.domains
+              ? arrayOp(`${path}.data.domains`, 'insert', domains.length, 'Nouveau domaine')
+              : update(`${path}.data.domains`, [...DEFAULT_DOMAINS, 'Nouveau domaine'])
+          }
+        >
+          ＋ Ajouter un domaine
+        </button>
+        <p className="wl-hint" style={{ marginTop: 6 }}>
+          Le choix « Autre » ouvre un champ libre où le client précise son domaine.
+        </p>
       </Field>
       <BookingAvailability path={path} />
       <p className="wl-hint" style={{ marginBottom: 14 }}>
@@ -1114,25 +1140,25 @@ function AddSectionControl() {
 /* Historique                                                          */
 /* ------------------------------------------------------------------ */
 function HistoryControl() {
-  const { replaceSite } = useEdit();
+  const { replaceSite, locale } = useEdit();
   const [list, setList] = useState<Array<{ id: number; saved_at: string }>>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   useEffect(() => {
-    fetch('/api/revisions')
+    fetch(`/api/revisions?locale=${encodeURIComponent(locale.code)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => {
         setList(d.revisions);
         setState('ready');
       })
       .catch(() => setState('error'));
-  }, []);
+  }, [locale.code]);
   if (state === 'loading') return <p className="wl-hint">Chargement…</p>;
   if (state === 'error') return <p className="wl-hint">Impossible de charger l'historique.</p>;
   if (!list.length) return <p className="wl-hint">Aucune version enregistrée pour le moment.</p>;
   return (
     <>
       <p className="wl-hint" style={{ marginBottom: 12 }}>
-        Chaque « Enregistrer » crée une version. Restaurer remplace la page actuelle (et l'enregistre).
+        Versions de la langue « {locale.label} ». Chaque « Enregistrer » crée une version ; restaurer remplace la page actuelle (et l'enregistre).
       </p>
       {list.map((r) => (
         <div key={r.id} className="wl-row" style={{ marginBottom: 8, justifyContent: 'space-between' }}>
@@ -1180,6 +1206,7 @@ const TITLES: Record<string, string> = {
   mailSettings: '✉️ Réglages e-mail',
   addSection: '➕ Ajouter une section',
   history: '🕘 Historique des versions',
+  i18n: '🌐 Langues',
 };
 
 export default function SidePanel() {
@@ -1225,12 +1252,14 @@ export default function SidePanel() {
         return <AddSectionControl />;
       case 'history':
         return <HistoryControl />;
+      case 'i18n':
+        return <I18nControl />;
       default:
         return null;
     }
   })();
   return (
-    <aside className="wl-panel" onClick={(e) => e.stopPropagation()}>
+    <aside className="wl-panel" dir="ltr" onClick={(e) => e.stopPropagation()}>
       <div className="wl-panel-head">
         <h3>{TITLES[selected.kind] ?? 'Édition'}</h3>
         <button type="button" className="wl-btn" onClick={() => select(null)} title="Fermer (Échap)">

@@ -53,6 +53,46 @@ historique et médias).
    restaurable via 🕘. Annuler/Rétablir : Cmd/Ctrl+Z / Shift+Cmd/Ctrl+Z.
 6. **👁 Aperçu** : voir la page comme un visiteur.
 
+## Flux des clients (XML / CSV)
+
+`GET /api/reservations/feed?key=<jeton>` renvoie en temps réel la liste des clients
+ayant réservé au format RSS/XML ; ajoutez `&format=csv` pour un CSV au format
+« liste de clients » Meta. Le jeton secret est affiché (et régénérable) dans
+Administration → Réservations → « Flux des clients ».
+
+## Suivi des conversions (OpenAI Ads)
+
+Le pixel OpenAI Ads est chargé sur la page publique (`components/TrackingScripts.tsx`).
+En plus, chaque réservation créée envoie côté serveur un événement `lead` à l'API
+de conversions (`lib/openai-ads.ts`), dédupliqué par identifiant de réservation.
+Renseignez `OPENAI_ADS_API_KEY` dans `.env` pour l'activer (vide = désactivé).
+
+## Multilingue (français / arabe…)
+
+Chaque langue possède **sa propre version de la page** (même éditeur, même
+sauvegarde). La langue par défaut vit à la racine `/`, les autres sous
+`/<code>` (ex. `/ar`). Tant qu'une langue n'a pas été enregistrée, elle affiche
+une copie de la langue par défaut (avec des polices arabes pour une langue de
+droite à gauche) : il suffit de l'ouvrir en mode édition, traduire, enregistrer.
+
+- **🌐 Langues** (barre latérale, mode édition) : langue par défaut, affichage du
+  sélecteur (drapeaux / libellés), et pour chaque langue son **libellé**, son
+  **drapeau** (France, Tunisie, Algérie, Maroc, Royaume-Uni… ou un émoji), son
+  sens d'écriture (RTL pour l'arabe) et son activation. On peut ajouter d'autres
+  langues (`en`, `it`…).
+- `node scripts/translate-ar.mjs [--force]` génère la version arabe à partir de
+  la version française (dictionnaire de traduction dans le script).
+- Le sélecteur (liste déroulante) s'affiche dans la barre de navigation (et dans le tiroir mobile) ;
+  sans barre de navigation il flotte en haut de page. En mode édition, cliquer
+  dessus ouvre le panneau Langues.
+- Les réglages du serveur (créneaux de réservation, e-mails, numéro WhatsApp)
+  sont toujours lus dans la version de la **langue par défaut**.
+- Données : table `site` (une ligne par `locale`), `revisions.locale`
+  (historique par langue), `settings` clé `i18n` (configuration). Les textes
+  d'interface codés en dur (formulaire de réservation) sont traduits dans
+  `lib/ui-strings.ts` ; `proxy.ts` transmet la langue de l'URL au layout pour
+  `<html lang dir>`.
+
 ## Architecture
 
 | Élément | Choix |

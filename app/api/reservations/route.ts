@@ -4,6 +4,7 @@ import { currentAdmin } from '@/lib/auth';
 import { getSite } from '@/lib/site';
 import {
   bookingConfigFrom,
+  isOtherDomain,
   frDate,
   isValidDateStr,
   isValidSlot,
@@ -11,6 +12,7 @@ import {
   waLink,
 } from '@/lib/booking';
 import { brandedEmail, getMailConfig, queueMail, flushMailQueue } from '@/lib/mail';
+import { leadEventId, sendLeadEvent } from '@/lib/openai-ads';
 
 export async function GET(req: NextRequest) {
   if (!(await currentAdmin())) {
@@ -24,7 +26,7 @@ export async function GET(req: NextRequest) {
   }
   const { rows } = await pool.query(
     `SELECT id, name, email, phone, service, to_char(date, 'YYYY-MM-DD') AS date, slot, message,
-            social_link, budget, status, created_at
+            social_link, budget, domain, status, created_at
      FROM reservations ORDER BY created_at DESC NULLS LAST LIMIT 200`,
   );
   return NextResponse.json({ reservations: rows });
@@ -35,7 +37,7 @@ export async function POST(req: NextRequest) {
   if (!body || typeof body !== 'object') {
     return NextResponse.json({ error: 'Requête invalide' }, { status: 400 });
   }
-  const { name, email, phone, service, date, slot, message, social, budget, website } =
+  const { name, email, phone, service, date, slot, message, social, budget, domain, domainOther, website } =
     body as Record<string, unknown>;
   // pot de miel anti-robots : le champ caché doit rester vide
   if (website) return NextResponse.json({ ok: true });
@@ -79,6 +81,19 @@ export async function POST(req: NextRequest) {
     );
   }
   const budgetS = String(budget ?? '').trim().slice(0, 120);
+  // Domaine d'activité : obligatoire ; « Autre » exige une précision libre
+  const domainRaw = String(domain ?? '').trim().slice(0, 120);
+  if (!domainRaw) {
+    return NextResponse.json({ error: "Indiquez votre domaine d'activité" }, { status: 400 });
+  }
+  let domainS = domainRaw;
+  if (isOtherDomain(domainRaw)) {
+    const other = String(domainOther ?? '').trim().slice(0, 120);
+    if (other.length < 2) {
+      return NextResponse.json({ error: "Précisez votre domaine d'activité" }, { status: 400 });
+    }
+    domainS = `${domainRaw} : ${other}`;
+  }
 
   const site = await getSite();
   const booking = site.page.sections.find((s) => s.type === 'booking');
@@ -96,8 +111,8 @@ export async function POST(req: NextRequest) {
   let id: number;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO reservations (name, email, phone, service, date, slot, message, social_link, budget)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      `INSERT INTO reservations (name, email, phone, service, date, slot, message, social_link, budget, domain)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
       [
         nameS,
         emailS,
@@ -108,6 +123,7 @@ export async function POST(req: NextRequest) {
         String(message ?? '').slice(0, 2000),
         socialS.slice(0, 500),
         budgetS,
+        domainS,
       ],
     );
     id = rows[0].id;
@@ -128,6 +144,7 @@ export async function POST(req: NextRequest) {
     ['Nom', nameS],
     ['WhatsApp', phoneS],
     ['Page à promouvoir', socialS],
+    ["Domaine d'activité", domainS],
   ];
   if (budgetS) details.push(['Budget marketing', budgetS]);
   if (emailS) {
@@ -164,6 +181,10 @@ export async function POST(req: NextRequest) {
   }
   void flushMailQueue().catch(() => {});
 
+  // OpenAI Ads : conversion « lead » côté serveur (sans bloquer la réponse)
+  const sourceUrl = req.headers.get('referer') || `${req.nextUrl.origin}/`;
+  void sendLeadEvent({ id: leadEventId(id), sourceUrl });
+
   // lien WhatsApp de confirmation côté client (vers le numéro du site)
   const footer = site.page.sections.find((s) => s.type === 'footer');
   const waNumber = String(
@@ -177,6 +198,7 @@ export async function POST(req: NextRequest) {
     `• Date : ${frDate(dateS)} à ${slotS}`,
     `• Téléphone : ${phoneS}`,
     `• Page : ${socialS}`,
+    `• Domaine : ${domainS}`,
   ];
   if (budgetS) lines.push(`• Budget marketing : ${budgetS}`);
   if (emailS) lines.push(`• E-mail : ${emailS}`);
