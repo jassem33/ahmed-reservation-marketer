@@ -91,7 +91,8 @@ export function T({
     fontSize: respSize(s.size ?? 18),
     fontWeight: s.weight,
     color: s.color,
-    textAlign: s.align,
+    // « gauche » / « droite » suivent le sens d'écriture : en arabe, « gauche » = début de ligne (à droite)
+    textAlign: s.align === 'left' ? 'start' : s.align === 'right' ? 'end' : s.align,
     lineHeight: s.lh,
     letterSpacing: s.ls !== undefined ? `${s.ls}px` : undefined,
     textTransform: s.transform,

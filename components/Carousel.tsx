@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useEdit } from './EditContext';
 
 /** Défilement automatique continu (façon bandeau de témoignages) :
  *  le contenu est dupliqué pour une boucle parfaite, en pause au survol.
@@ -54,6 +55,7 @@ export default function Carousel({
   className?: string;
   ariaLabel?: string;
 }) {
+  const { t } = useEdit();
   const ref = useRef<HTMLDivElement>(null);
   const [canL, setCanL] = useState(false);
   const [canR, setCanR] = useState(false);
@@ -61,8 +63,13 @@ export default function Carousel({
   const update = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    setCanL(el.scrollLeft > 8);
-    setCanR(el.scrollLeft < el.scrollWidth - el.clientWidth - 8);
+    // en écriture de droite à gauche, scrollLeft est négatif et le début est à droite
+    const rtl = getComputedStyle(el).direction === 'rtl';
+    const pos = Math.abs(el.scrollLeft);
+    const atStart = pos <= 8;
+    const atEnd = pos >= el.scrollWidth - el.clientWidth - 8;
+    setCanL(rtl ? !atEnd : !atStart);
+    setCanR(rtl ? !atStart : !atEnd);
   }, []);
 
   useEffect(() => {
@@ -103,7 +110,7 @@ export default function Carousel({
           e.stopPropagation();
           nudge(-1);
         }}
-        aria-label="Précédent"
+        aria-label={t.prev}
       >
         ‹
       </button>
@@ -115,7 +122,7 @@ export default function Carousel({
           e.stopPropagation();
           nudge(1);
         }}
-        aria-label="Suivant"
+        aria-label={t.next}
       >
         ›
       </button>

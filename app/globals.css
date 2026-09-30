@@ -302,7 +302,7 @@ body {
   display: flex;
   align-items: stretch;
   gap: 18px;
-  padding-right: 18px;
+  padding-inline-end: 18px;
 }
 .wl-amq-item {
   flex: none;
@@ -346,6 +346,16 @@ body {
   to {
     transform: translateX(-50%);
   }
+}
+/* en écriture de droite à gauche, la rangée part du bord droit : on la fait glisser vers la droite */
+@keyframes wl-scroll-rtl {
+  to {
+    transform: translateX(50%);
+  }
+}
+[dir='rtl'] .wl-automarquee-inner,
+[dir='rtl'] .wl-marquee-inner {
+  animation-name: wl-scroll-rtl;
 }
 
 /* ---------- Révélation au défilement ---------- */
@@ -1513,4 +1523,132 @@ select option {
   margin-top: 8px;
   padding-top: 16px;
   border-top: 1px solid #23232c;
+}
+
+/* ---------- Sélecteur de langue (liste déroulante) ---------- */
+.wl-lang {
+  position: relative;
+  display: inline-block;
+}
+.wl-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--c-text, #fff);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.wl-lang-btn:hover,
+.wl-lang.open .wl-lang-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.wl-lang-chev {
+  opacity: 0.7;
+  transition: transform 0.2s;
+}
+.wl-lang.open .wl-lang-chev {
+  transform: rotate(180deg);
+}
+.wl-lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  min-width: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--c-bg, #191919) 92%, #fff 8%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 70;
+  animation: wl-lang-in 0.16s ease;
+}
+@keyframes wl-lang-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.wl-lang-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text, #fff);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.wl-lang-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.wl-lang-item.wl-lang-disabled {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.wl-lang-off {
+  opacity: 0.45;
+  outline: 1px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+}
+.wl-flag {
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  flex: none;
+}
+.wl-lang-floating {
+  position: fixed;
+  top: 14px;
+  inset-inline-end: 14px;
+  z-index: 50;
+}
+.wl-lang-floating .wl-lang-btn {
+  background: color-mix(in srgb, var(--c-bg, #191919) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+/* dans le tiroir mobile : menu déplié en ligne, sans superposition */
+.wl-lang-drawer {
+  margin-top: 12px;
+  justify-self: start;
+}
+.wl-lang-drawer .wl-lang-menu {
+  position: static;
+  box-shadow: none;
+  animation: none;
+}
+@media (max-width: 899px) {
+  /* sur mobile, le libellé disparaît de la barre (le drapeau + chevron suffisent) */
+  .wl-lang-nav .wl-lang-btn > span {
+    display: none;
+  }
+}
+
+/* ---------- Droite à gauche (arabe) ---------- */
+/* alignements utilitaires « gauche » : suivent le sens d'écriture */
+[dir='rtl'] .text-left {
+  text-align: right;
+}
+[dir='rtl'] .wl-nav-link::after {
+  left: auto;
+  right: 0;
+}
+/* le bouton menu du site partage la classe du bouton fixe de l'admin (left: 12px) :
+   en RTL il reste dans le flux, à côté du sélecteur de langue, pour ne pas le recouvrir */
+[dir='rtl'] .wl-nav-inner .wl-burger {
+  position: static;
 }

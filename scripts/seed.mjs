@@ -31,7 +31,7 @@ await pool.query(
 );
 
 // 3. Contenu par défaut + médias d'exemple
-const existing = await pool.query('SELECT 1 FROM site WHERE id = 1');
+const existing = await pool.query("SELECT 1 FROM site WHERE locale = 'fr'");
 if (existing.rows[0] && !reset) {
   console.log('ℹ Site déjà initialisé — lancez « npm run seed -- --reset » pour repartir du modèle.');
 } else {
@@ -81,8 +81,8 @@ if (existing.rows[0] && !reset) {
     await pool.query('DELETE FROM media WHERE NOT (id = ANY($1::uuid[]))', [insertedIds]);
   }
   await pool.query(
-    `INSERT INTO site (id, theme, page) VALUES (1, $1, $2)
-     ON CONFLICT (id) DO UPDATE SET theme = $1, page = $2, updated_at = now()`,
+    `INSERT INTO site (id, locale, theme, page) VALUES (1, 'fr', $1, $2)
+     ON CONFLICT (locale) DO UPDATE SET theme = $1, page = $2, updated_at = now()`,
     [site.theme, site.page],
   );
   console.log("✓ Contenu par défaut installé (avec images d'exemple stockées dans Postgres).");

@@ -18,7 +18,7 @@ for (const line of readFileSync(path.join(root, '.env.local'), 'utf8').split('\n
 }
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
-const { rows } = await pool.query('SELECT theme, page FROM site WHERE id = 1');
+const { rows } = await pool.query("SELECT theme, page FROM site WHERE locale = 'fr'");
 if (!rows[0]) {
   console.error('Aucun site en base.');
   process.exit(1);
@@ -86,6 +86,6 @@ for (const item of targets) {
 await browser.close();
 
 await pool.query('INSERT INTO revisions (theme, page) VALUES ($1, $2)', [theme, page]);
-await pool.query('UPDATE site SET page = $1, updated_at = now() WHERE id = 1', [page]);
+await pool.query("UPDATE site SET page = $1, updated_at = now() WHERE locale = 'fr'", [page]);
 console.log('✓ Affiches enregistrées et document mis à jour.');
 await pool.end();

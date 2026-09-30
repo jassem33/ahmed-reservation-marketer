@@ -11,12 +11,21 @@ import React, {
 } from 'react';
 import type { SiteDoc } from '@/lib/types';
 import { getAtPath, setAtPath } from '@/lib/path';
+import { DEFAULT_I18N, type I18nConfig, type LocaleDef } from '@/lib/i18n';
+import { uiStrings, type UiStrings } from '@/lib/ui-strings';
 
 export type Selection = { kind: string; path: string } | null;
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 type Ctx = {
   site: SiteDoc;
+  /** Langue du document en cours d'affichage / d'édition. */
+  locale: LocaleDef;
+  /** Configuration multilingue globale (libellés, drapeaux, langue par défaut). */
+  i18n: I18nConfig;
+  setI18n: (cfg: I18nConfig) => void;
+  /** Chaînes d'interface non éditables, dans la langue courante. */
+  t: UiStrings;
   isAdmin: boolean;
   editMode: boolean;
   dirty: boolean;
@@ -48,12 +57,17 @@ export function useEdit(): Ctx {
 export function EditProvider({
   initial,
   initialAdmin,
+  locale = DEFAULT_I18N.locales[0],
+  i18n: initialI18n = DEFAULT_I18N,
   children,
 }: {
   initial: SiteDoc;
   initialAdmin: boolean;
+  locale?: LocaleDef;
+  i18n?: I18nConfig;
   children: React.ReactNode;
 }) {
+  const [i18n, setI18n] = useState<I18nConfig>(initialI18n);
   const [history, setHistory] = useState<{ stack: SiteDoc[]; idx: number }>({
     stack: [initial],
     idx: 0,
@@ -125,7 +139,7 @@ export function EditProvider({
   const save = useCallback(async () => {
     setSaving('saving');
     try {
-      const res = await fetch('/api/site', {
+      const res = await fetch(`/api/site?locale=${encodeURIComponent(locale.code)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(siteRef.current),
@@ -138,7 +152,7 @@ export function EditProvider({
       setSaving('error');
       setTimeout(() => setSaving('idle'), 2600);
     }
-  }, []);
+  }, [locale.code]);
 
   const replaceSite = useCallback((doc: SiteDoc) => {
     setHistory({ stack: [doc], idx: 0 });
@@ -188,6 +202,10 @@ export function EditProvider({
 
   const value: Ctx = {
     site,
+    locale,
+    i18n,
+    setI18n,
+    t: uiStrings(locale.code),
     isAdmin,
     editMode,
     dirty,

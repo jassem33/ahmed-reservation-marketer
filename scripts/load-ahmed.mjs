@@ -229,7 +229,7 @@ const page = {
 };
 
 // thème : palette violette de l'audit, inchangée — seul le nom du site change
-const current = await pool.query('SELECT theme, page FROM site WHERE id = 1');
+const current = await pool.query("SELECT theme, page FROM site WHERE locale = 'fr'");
 const theme = current.rows[0]?.theme ?? JSON.parse(readFileSync(path.join(root, 'lib', 'default-site.json'), 'utf8')).theme;
 theme.brand = {
   siteTitle: 'Ahmed Ameri — Digital Marketer',
@@ -244,8 +244,8 @@ if (current.rows[0]) {
   ]);
 }
 await pool.query(
-  `INSERT INTO site (id, theme, page) VALUES (1, $1, $2)
-   ON CONFLICT (id) DO UPDATE SET theme = $1, page = $2, updated_at = now()`,
+  `INSERT INTO site (id, locale, theme, page) VALUES (1, 'fr', $1, $2)
+   ON CONFLICT (locale) DO UPDATE SET theme = $1, page = $2, updated_at = now()`,
   [theme, page],
 );
 

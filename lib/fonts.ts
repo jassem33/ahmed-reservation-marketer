@@ -9,6 +9,8 @@ export const FONTS: Record<string, { label: string; family: string }> = {
   'space-grotesk': { label: 'Space Grotesk', family: "'Space Grotesk', sans-serif" },
   playfair: { label: 'Playfair Display — serif', family: "'Playfair Display', serif" },
   raleway: { label: 'Raleway', family: "'Raleway', sans-serif" },
+  cairo: { label: 'Cairo — arabe & latin', family: "'Cairo', 'Tajawal', sans-serif" },
+  tajawal: { label: 'Tajawal — arabe & latin', family: "'Tajawal', 'Cairo', sans-serif" },
 };
 
 /** Résout une clé de police vers une famille CSS.

@@ -2,10 +2,12 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SiteDoc } from '@/lib/types';
+import type { I18nConfig, LocaleDef } from '@/lib/i18n';
 import { themeCssVars } from '@/lib/theme-vars';
 import { EditProvider, useEdit } from './EditContext';
 import { SectionBody, SectionFrame } from './sections';
 import Navbar from './Navbar';
+import LanguageSwitcher from './LanguageSwitcher';
 import Sidebar from './Sidebar';
 import Analytics from './Analytics';
 import SidePanel from './controls/panels';
@@ -35,8 +37,9 @@ function WhatsAppFab() {
 }
 
 function Root() {
-  const { site, editMode, selected, select, isAdmin } = useEdit();
+  const { site, editMode, selected, select, isAdmin, t: ui } = useEdit();
   const t = site.theme;
+  const navShown = !!site.page.nav && site.page.nav.enabled !== false;
   const rightPanelOpen = !!selected && editMode;
   const hasSiteFooter = site.page.sections.some((s) => s.type === 'sitefooter');
   return (
@@ -59,6 +62,8 @@ function Root() {
         }}
       >
         {site.page.nav && <Navbar nav={site.page.nav} />}
+        {/* sans barre de navigation, le sélecteur de langue flotte en haut de page */}
+        {!navShown && <LanguageSwitcher floating />}
         {site.page.sections.map((sec, i) => (
           <SectionFrame key={sec.id} sec={sec} i={i}>
             <SectionBody sec={sec} i={i} />
@@ -73,7 +78,7 @@ function Root() {
               © {new Date().getFullYear()} {t.brand.siteTitle}
             </span>
             <a href="/admin" style={{ color: 'rgba(255,255,255,.45)' }}>
-              Administration
+              {ui.admin}
             </a>
           </footer>
         )}
@@ -89,12 +94,16 @@ function Root() {
 export default function SiteApp({
   initial,
   initialAdmin,
+  locale,
+  i18n,
 }: {
   initial: SiteDoc;
   initialAdmin: boolean;
+  locale: LocaleDef;
+  i18n: I18nConfig;
 }) {
   return (
-    <EditProvider initial={initial} initialAdmin={initialAdmin}>
+    <EditProvider initial={initial} initialAdmin={initialAdmin} locale={locale} i18n={i18n}>
       <Root />
     </EditProvider>
   );

@@ -98,7 +98,7 @@ export default function Sidebar() {
         ☰
       </button>
       {open && <div className="wl-sidebar-backdrop" onClick={() => setOpen(false)} />}
-      <aside className={`wl-sidebar ${open ? 'open' : ''}`}>
+      <aside className={`wl-sidebar ${open ? 'open' : ''}`} dir="ltr">
         <div className="wl-sidebar-brand">
           <span className="wl-sidebar-logo" aria-hidden>
             {(brand[0] ?? 'A').toUpperCase()}
@@ -164,6 +164,12 @@ export default function Sidebar() {
                   label="Ajouter une section"
                   active={selected?.kind === 'addSection'}
                   onClick={() => go(() => select({ kind: 'addSection', path: '' }))}
+                />
+                <NavItem
+                  icon="🌐"
+                  label="Langues"
+                  active={selected?.kind === 'i18n'}
+                  onClick={() => go(() => select({ kind: 'i18n', path: '' }))}
                 />
                 <NavItem
                   icon="🕘"

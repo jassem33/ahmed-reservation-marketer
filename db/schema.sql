@@ -85,3 +85,22 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 
 CREATE INDEX IF NOT EXISTS analytics_events_created_idx ON analytics_events (created_at);
 CREATE INDEX IF NOT EXISTS analytics_events_kind_idx ON analytics_events (kind);
+
+-- Multilingue : un document `site` par langue (clé = code de langue, ex. 'fr', 'ar').
+-- L'ancienne ligne unique (id = 1) devient la version 'fr'. La configuration des
+-- langues (libellés, drapeaux, langue par défaut) vit dans `settings` (clé 'i18n').
+ALTER TABLE site ADD COLUMN IF NOT EXISTS locale TEXT NOT NULL DEFAULT 'fr';
+ALTER TABLE site DROP CONSTRAINT IF EXISTS site_id_check;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint c
+    JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY (c.conkey)
+    WHERE c.conrelid = 'site'::regclass AND c.contype = 'p' AND a.attname = 'id'
+  ) THEN
+    ALTER TABLE site DROP CONSTRAINT site_pkey;
+    ALTER TABLE site ADD PRIMARY KEY (locale);
+  END IF;
+END $$;
+ALTER TABLE revisions ADD COLUMN IF NOT EXISTS locale TEXT NOT NULL DEFAULT 'fr';
+CREATE INDEX IF NOT EXISTS revisions_locale_idx ON revisions (locale, id DESC);

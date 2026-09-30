@@ -1,17 +1,11 @@
-import { getSite } from '@/lib/site';
-import { currentAdmin } from '@/lib/auth';
-import SiteApp from '@/components/SiteApp';
-import TrackingScripts from '@/components/TrackingScripts';
+import { getI18n } from '@/lib/i18n-server';
+import { resolveLocale } from '@/lib/i18n';
+import SitePage from '@/components/SitePage';
 
 export const dynamic = 'force-dynamic';
 
+/** Racine du site : langue par défaut. Les autres langues vivent sous `/[lang]`. */
 export default async function Home() {
-  const [site, admin] = await Promise.all([getSite(), currentAdmin()]);
-  return (
-    <>
-      <SiteApp initial={site} initialAdmin={!!admin} />
-      {/* Meta Pixel + GA4 : uniquement pour les visiteurs, pas pour l'admin connecté */}
-      {!admin && <TrackingScripts />}
-    </>
-  );
+  const i18n = await getI18n();
+  return <SitePage locale={resolveLocale(i18n, null)} i18n={i18n} />;
 }

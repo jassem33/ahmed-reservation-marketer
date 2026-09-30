@@ -5,9 +5,10 @@ import React, { useEffect, useState } from 'react';
 import type { NavConfig } from '@/lib/types';
 import { useEdit } from './EditContext';
 import { mediaUrl } from './atoms';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function Navbar({ nav }: { nav: NavConfig }) {
-  const { editMode, select, selected } = useEdit();
+  const { editMode, select, selected, t } = useEdit();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -60,7 +61,7 @@ export default function Navbar({ nav }: { nav: NavConfig }) {
           )}
           <span>{nav.brand}</span>
         </a>
-        <nav className="wl-nav-links" aria-label="Navigation principale">
+        <nav className="wl-nav-links" aria-label={t.mainNav}>
           {nav.links.map((l, i) => (
             <a key={i} {...linkProps(l.href)} className="wl-nav-link">
               {l.label}
@@ -68,6 +69,7 @@ export default function Navbar({ nav }: { nav: NavConfig }) {
           ))}
         </nav>
         <div className="wl-nav-right">
+          <LanguageSwitcher className="wl-lang-nav" />
           {nav.cta?.enabled !== false && nav.cta?.label && (
             <a {...linkProps(nav.cta.url)} className="wl-btn-cta wl-nav-cta">
               {nav.cta.label}
@@ -76,7 +78,7 @@ export default function Navbar({ nav }: { nav: NavConfig }) {
           <button
             type="button"
             className={`wl-burger ${open ? 'open' : ''}`}
-            aria-label="Menu"
+            aria-label={t.menu}
             aria-expanded={open}
             onClick={(e) => {
               e.stopPropagation();
@@ -104,6 +106,7 @@ export default function Navbar({ nav }: { nav: NavConfig }) {
             {nav.cta.label}
           </a>
         )}
+        <LanguageSwitcher className="wl-lang-drawer" />
       </div>
     </header>
   );

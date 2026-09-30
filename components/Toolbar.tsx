@@ -70,6 +70,9 @@ export default function Toolbar() {
           <button type="button" className="wl-tbtn" onClick={() => select({ kind: 'addSection', path: '' })}>
             ➕ Section
           </button>
+          <button type="button" className="wl-tbtn" title="Langues" onClick={() => select({ kind: 'i18n', path: '' })}>
+            🌐
+          </button>
           <button type="button" className="wl-tbtn" title="Historique des versions" onClick={() => select({ kind: 'history', path: '' })}>
             🕘
           </button>
