@@ -80,6 +80,7 @@ export async function flushMailQueue(): Promise<{ sent: number; failed: number; 
   const cfg = await getMailConfig();
   if (!mailReady(cfg)) {
     const { rows } = await pool.query("SELECT count(*)::int AS n FROM mail_queue WHERE status = 'queued'");
+    if (rows[0].n > 0) console.warn(`[mail] SMTP non configuré : ${rows[0].n} e-mail(s) en attente`);
     return { sent: 0, failed: 0, left: rows[0].n };
   }
   await pool.query(
@@ -91,6 +92,9 @@ export async function flushMailQueue(): Promise<{ sent: number; failed: number; 
     port: cfg.port ?? 465,
     secure: cfg.secure ?? true,
     auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
   });
   const { rows } = await pool.query(
     "SELECT id, to_email, subject, html, attachments FROM mail_queue WHERE status = 'queued' ORDER BY id LIMIT 25",
@@ -111,6 +115,7 @@ export async function flushMailQueue(): Promise<{ sent: number; failed: number; 
       sent++;
     } catch (e) {
       failed++;
+      console.error(`[mail] envoi #${m.id} vers ${m.to_email} échoué :`, e instanceof Error ? e.message : e);
       await pool.query("UPDATE mail_queue SET status = 'error', error = $2 WHERE id = $1", [
         m.id,
         e instanceof Error ? e.message.slice(0, 500) : 'erreur inconnue',
