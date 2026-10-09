@@ -172,8 +172,7 @@ export function brandedEmail(opts: {
       </td></tr>
       <tr><td style="background:#ffffff;border-radius:0 0 16px 16px;padding:30px">
         <h1 style="margin:0 0 12px;font-size:21px;color:#16161a">${esc(opts.title)}</h1>
-        <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#4a4a55">${esc(opts.intro).replace(/
-/g, '<br>')}</p>
+        <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#4a4a55">${esc(opts.intro).replace(/\n/g, '<br>')}</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="background:#f7f7fa;border-radius:12px;width:100%">${rows}</table>
         ${buttons}
         ${opts.note ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:#8a8a97">${esc(opts.note)}</p>` : ''}
