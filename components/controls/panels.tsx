@@ -641,7 +641,10 @@ export function MailSettingsControl() {
           {stats.failed} en erreur
         </p>
       )}
-      {field('host', 'Serveur SMTP', 'smtp.gmail.com')}
+      <p className="wl-hint" style={{ marginBottom: 14 }}>
+        Les champs laissés vides reprennent les variables <code>MAIL_*</code> du fichier <code>.env</code> du serveur.
+      </p>
+      {field('host', 'Serveur SMTP', 'mail.votre-domaine.com')}
       <div className="wl-row" style={{ marginBottom: 16 }}>
         <div style={{ width: 110 }}>
           <span className="wl-label">Port</span>

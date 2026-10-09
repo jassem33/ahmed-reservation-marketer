@@ -41,6 +41,8 @@ ALTER TABLE reservations ADD COLUMN IF NOT EXISTS social_link TEXT;
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS budget TEXT;
 -- Domaine d'activité du client (liste + « Autre : … » saisi librement)
 ALTER TABLE reservations ADD COLUMN IF NOT EXISTS domain TEXT;
+-- Rappel envoyé la veille du rendez-vous (voir lib/reminders.ts)
+ALTER TABLE reservations ADD COLUMN IF NOT EXISTS reminded_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -58,6 +60,8 @@ CREATE TABLE IF NOT EXISTS mail_queue (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   sent_at TIMESTAMPTZ
 );
+-- Pièces jointes (invitation .ics) : [{filename, content, contentType}]
+ALTER TABLE mail_queue ADD COLUMN IF NOT EXISTS attachments JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

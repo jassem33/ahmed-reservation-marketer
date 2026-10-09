@@ -155,9 +155,12 @@ export async function POST(req: NextRequest) {
         siteTitle,
         accent,
         title: 'Votre demande est bien reçue ✅',
-        intro: `Merci ${nameS} ! Nous avons bien reçu votre demande de réservation. Vous recevrez une confirmation très vite.`,
+        intro: `Bonjour ${nameS},
+Merci pour votre demande de rendez-vous. Nous la vérifions et vous envoyons la confirmation définitive très rapidement (avec l'invitation à ajouter à votre agenda).`,
         rows: details,
         outro: 'Besoin de modifier ou d’annuler ? Répondez simplement à cet e-mail.',
+        signature: `À très bientôt,
+L'équipe ${siteTitle}`,
       }),
     );
   }

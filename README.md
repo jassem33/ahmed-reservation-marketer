@@ -53,6 +53,16 @@ historique et médias).
    restaurable via 🕘. Annuler/Rétablir : Cmd/Ctrl+Z / Shift+Cmd/Ctrl+Z.
 6. **👁 Aperçu** : voir la page comme un visiteur.
 
+## E-mails de réservation
+
+SMTP : Administration → Réglages e-mail, ou variables `MAIL_*` dans `.env`
+(secours champ par champ). Trois e-mails : accusé de réception à la demande,
+**confirmation** quand l'admin confirme (date, heure, bouton « Ajouter à Google
+Agenda », invitation `.ics` jointe avec rappel 24 h avant) et **rappel
+automatique la veille** (boucle horaire démarrée par `instrumentation.ts`,
+colonne `reservations.reminded_at`). Les e-mails en attente depuis plus de
+7 jours sont abandonnés au lieu d'être envoyés en retard.
+
 ## Flux des clients (XML / CSV)
 
 `GET /api/reservations/feed?key=<jeton>` renvoie en temps réel la liste des clients
