@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEdit } from './EditContext';
+import { localePath } from '@/lib/i18n';
 
 function NavItem({
   icon,
@@ -50,6 +51,8 @@ export default function Sidebar() {
     save,
     logout,
     site,
+    i18n,
+    locale,
   } = useEdit();
   const pathname = usePathname();
   const router = useRouter();
@@ -66,7 +69,9 @@ export default function Sidebar() {
 
   if (!isAdmin) return null;
 
-  const onSite = pathname === '/';
+  // La page publique vit à « / » (langue par défaut) et « /xx » (autres langues)
+  const onSite = !pathname.startsWith('/admin');
+  const langs = i18n.locales.filter((l) => l.enabled);
   const view = pathname === '/admin/reservations'
     ? 'reservations'
     : pathname.startsWith('/admin/visiteurs')
@@ -110,7 +115,28 @@ export default function Sidebar() {
         </div>
 
         <p className="wl-nav-group">Pages</p>
-        <NavItem icon="🖥️" label="Mon site" active={view === 'site'} onClick={() => goPath('/')} />
+        {langs.length > 1 ? (
+          langs.map((l) => (
+            <NavItem
+              key={l.code}
+              icon="🖥️"
+              label={`Mon site — ${l.label}`}
+              active={view === 'site' && locale.code === l.code}
+              onClick={() => {
+                const href = localePath(i18n, l.code);
+                if (onSite && locale.code !== l.code) {
+                  if (dirty && !window.confirm('Modifications non enregistrées. Changer de langue quand même ?')) return;
+                  // document différent par langue : rechargement complet
+                  window.location.href = href;
+                  return;
+                }
+                goPath(href);
+              }}
+            />
+          ))
+        ) : (
+          <NavItem icon="🖥️" label="Mon site" active={view === 'site'} onClick={() => goPath('/')} />
+        )}
         <NavItem
           icon="📅"
           label="Réservations"
