@@ -56,7 +56,9 @@ historique et médias).
 ## E-mails de réservation
 
 SMTP : Administration → Réglages e-mail, ou variables `MAIL_*` dans `.env`
-(secours champ par champ). Trois e-mails : accusé de réception à la demande,
+(secours champ par champ). Pour ahmedmarketer.com, la boîte oxahost vit sur
+`plesk1.tn.oxa.host` (port 465, SSL) — pas sur `mail.ahmedmarketer.com`, qui
+pointe vers le VPS du site. Trois e-mails : accusé de réception à la demande,
 **confirmation** quand l'admin confirme (date, heure, bouton « Ajouter à Google
 Agenda », invitation `.ics` jointe avec rappel 24 h avant) et **rappel
 automatique la veille** (boucle horaire démarrée par `instrumentation.ts`,
