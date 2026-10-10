@@ -1,5 +1,9 @@
 import nodemailer from 'nodemailer';
 import { pool } from './db';
+import { renderEmail, renderText, type EmailBrand, type EmailContent } from './email-template';
+
+export type { EmailBrand, EmailContent, EmailCta } from './email-template';
+export { emailBrand } from './email-template';
 
 export type MailConfig = {
   host: string;
@@ -66,11 +70,23 @@ export async function queueMail(
   subject: string,
   html: string,
   attachments: MailAttachment[] = [],
+  text = '',
 ): Promise<void> {
   await pool.query(
-    'INSERT INTO mail_queue (to_email, subject, html, attachments) VALUES ($1, $2, $3, $4)',
-    [to, subject, html, JSON.stringify(attachments)],
+    'INSERT INTO mail_queue (to_email, subject, html, attachments, text) VALUES ($1, $2, $3, $4, $5)',
+    [to, subject, html, JSON.stringify(attachments), text],
   );
+}
+
+/** Compose (HTML + texte) et met en file un e-mail aux couleurs du site. */
+export async function queueBrandedMail(
+  to: string,
+  subject: string,
+  brand: EmailBrand,
+  content: EmailContent,
+  attachments: MailAttachment[] = [],
+): Promise<void> {
+  await queueMail(to, subject, renderEmail(brand, content), attachments, renderText(brand, content));
 }
 
 /** Tente d'envoyer tous les e-mails en attente. Sans configuration SMTP,
@@ -97,7 +113,7 @@ export async function flushMailQueue(): Promise<{ sent: number; failed: number; 
     socketTimeout: 30_000,
   });
   const { rows } = await pool.query(
-    "SELECT id, to_email, subject, html, attachments FROM mail_queue WHERE status = 'queued' ORDER BY id LIMIT 25",
+    "SELECT id, to_email, subject, html, text, attachments FROM mail_queue WHERE status = 'queued' ORDER BY id LIMIT 25",
   );
   let sent = 0;
   let failed = 0;
@@ -109,6 +125,7 @@ export async function flushMailQueue(): Promise<{ sent: number; failed: number; 
         to: m.to_email,
         subject: m.subject,
         html: m.html,
+        text: m.text || undefined,
         attachments: attachments.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType })),
       });
       await pool.query("UPDATE mail_queue SET status = 'sent', sent_at = now(), error = NULL WHERE id = $1", [m.id]);
@@ -124,68 +141,4 @@ export async function flushMailQueue(): Promise<{ sent: number; failed: number; 
   }
   const left = await pool.query("SELECT count(*)::int AS n FROM mail_queue WHERE status = 'queued'");
   return { sent, failed, left: left.rows[0].n };
-}
-
-const esc = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-export type EmailCta = { label: string; url: string; secondary?: boolean };
-
-/** Gabarit d'e-mail HTML aux couleurs du site. */
-export function brandedEmail(opts: {
-  siteTitle: string;
-  accent: string;
-  title: string;
-  intro: string;
-  rows: Array<[string, string]>;
-  outro?: string;
-  ctaLabel?: string;
-  ctaUrl?: string;
-  /** Boutons supplémentaires (ex. « Ajouter à Google Agenda »). */
-  ctas?: EmailCta[];
-  /** Petit texte sous les boutons (ex. mention du rappel 24 h). */
-  note?: string;
-  signature?: string;
-}): string {
-  const rows = opts.rows
-    .map(
-      ([k, v]) => `
-      <tr>
-        <td style="padding:8px 14px;color:#6b6b76;font-size:13px;white-space:nowrap">${esc(k)}</td>
-        <td style="padding:8px 14px;color:#16161a;font-size:14px;font-weight:600">${esc(v)}</td>
-      </tr>`,
-    )
-    .join('');
-  const ctas: EmailCta[] = [
-    ...(opts.ctaLabel && opts.ctaUrl ? [{ label: opts.ctaLabel, url: opts.ctaUrl }] : []),
-    ...(opts.ctas ?? []),
-  ];
-  const buttons = ctas.length
-    ? `<p style="margin:26px 0 0">${ctas
-        .map((c) =>
-          c.secondary
-            ? `<a href="${c.url}" style="color:${opts.accent};border:2px solid ${opts.accent};text-decoration:none;padding:10px 22px;border-radius:999px;font-size:14px;font-weight:600;display:inline-block;margin:0 8px 8px 0">${esc(c.label)}</a>`
-            : `<a href="${c.url}" style="background:${opts.accent};color:#fff;text-decoration:none;padding:12px 26px;border-radius:999px;font-size:14px;font-weight:600;display:inline-block;margin:0 8px 8px 0">${esc(c.label)}</a>`,
-        )
-        .join('')}</p>`
-    : '';
-  return `<!doctype html><html><body style="margin:0;background:#f2f2f6;padding:28px 12px;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
-      <tr><td style="background:${opts.accent};border-radius:16px 16px 0 0;padding:22px 30px">
-        <div style="color:#fff;font-size:17px;font-weight:800;letter-spacing:1px;text-transform:uppercase">${esc(opts.siteTitle)}</div>
-      </td></tr>
-      <tr><td style="background:#ffffff;border-radius:0 0 16px 16px;padding:30px">
-        <h1 style="margin:0 0 12px;font-size:21px;color:#16161a">${esc(opts.title)}</h1>
-        <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#4a4a55">${esc(opts.intro).replace(/\n/g, '<br>')}</p>
-        <table role="presentation" cellpadding="0" cellspacing="0" style="background:#f7f7fa;border-radius:12px;width:100%">${rows}</table>
-        ${buttons}
-        ${opts.note ? `<p style="margin:10px 0 0;font-size:12px;line-height:1.6;color:#8a8a97">${esc(opts.note)}</p>` : ''}
-        ${opts.outro ? `<p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#6b6b76">${esc(opts.outro)}</p>` : ''}
-        ${opts.signature ? `<p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#4a4a55">${esc(opts.signature).replace(/\n/g, '<br>')}</p>` : ''}
-      </td></tr>
-      <tr><td style="padding:16px 8px;text-align:center;color:#9a9aa6;font-size:11px">${esc(opts.siteTitle)}</td></tr>
-    </table>
-  </td></tr></table>
-</body></html>`;
 }

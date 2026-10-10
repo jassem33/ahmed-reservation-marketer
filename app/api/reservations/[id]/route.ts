@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { currentAdmin } from '@/lib/auth';
-import { getSite } from '@/lib/site';
-import { frDate } from '@/lib/booking';
-import { brandedEmail, flushMailQueue, queueMail } from '@/lib/mail';
-import { queueConfirmationMail } from '@/lib/reservation-mail';
+import { flushMailQueue } from '@/lib/mail';
+import { queueCancellationMail, queueConfirmationMail } from '@/lib/reservation-mail';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await currentAdmin())) {
@@ -27,27 +25,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     await queueConfirmationMail(r);
     void flushMailQueue().catch(() => {});
   } else if (status === 'cancelled' && r.email) {
-    const site = await getSite();
-    const siteTitle = site.theme.brand.siteTitle;
-    await queueMail(
-      r.email,
-      `Réservation annulée — ${siteTitle}`,
-      brandedEmail({
-        siteTitle,
-        accent: site.theme.colors.primary,
-        title: 'Votre réservation a été annulée',
-        intro: `Bonjour ${r.name},
-Votre réservation a été annulée. Vous pouvez en reprendre une à tout moment sur notre site.`,
-        rows: [
-          ['Service', r.service || '—'],
-          ['Date', frDate(r.date)],
-          ['Heure', r.slot],
-        ],
-        outro: 'Une question ? Répondez simplement à cet e-mail.',
-        signature: `Cordialement,
-L'équipe ${siteTitle}`,
-      }),
-    );
+    await queueCancellationMail(r);
     void flushMailQueue().catch(() => {});
   }
   return NextResponse.json({ ok: true });

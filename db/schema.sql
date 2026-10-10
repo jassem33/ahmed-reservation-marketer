@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS mail_queue (
 );
 -- Pièces jointes (invitation .ics) : [{filename, content, contentType}]
 ALTER TABLE mail_queue ADD COLUMN IF NOT EXISTS attachments JSONB NOT NULL DEFAULT '[]'::jsonb;
+-- Version texte brut de l'e-mail (clients sans HTML, score anti-spam)
+ALTER TABLE mail_queue ADD COLUMN IF NOT EXISTS text TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS media (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

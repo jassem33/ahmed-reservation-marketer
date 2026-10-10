@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentAdmin } from '@/lib/auth';
 import { getSite } from '@/lib/site';
-import { brandedEmail, flushMailQueue, getMailConfig, mailReady, queueMail } from '@/lib/mail';
+import { emailBrand, flushMailQueue, getMailConfig, mailReady, queueBrandedMail } from '@/lib/mail';
 
 export async function POST() {
   if (!(await currentAdmin())) {
@@ -16,20 +16,14 @@ export async function POST() {
     );
   }
   const site = await getSite();
-  await queueMail(
-    to,
-    `E-mail de test — ${site.theme.brand.siteTitle}`,
-    brandedEmail({
-      siteTitle: site.theme.brand.siteTitle,
-      accent: site.theme.colors.primary,
-      title: 'La configuration fonctionne 🎉',
-      intro: 'Cet e-mail de test confirme que votre configuration SMTP est opérationnelle.',
-      rows: [
-        ['Serveur', String(cfg.host)],
-        ['Expéditeur', String(cfg.from)],
-      ],
-    }),
-  );
+  await queueBrandedMail(to, `E-mail de test — ${site.theme.brand.siteTitle}`, emailBrand(site), {
+    title: 'La configuration fonctionne',
+    intro: 'Cet e-mail de test confirme que votre configuration SMTP est opérationnelle. Les clients recevront leurs e-mails avec cette présentation, votre logo et vos couleurs.',
+    rows: [
+      ['Serveur', String(cfg.host)],
+      ['Expéditeur', String(cfg.from)],
+    ],
+  });
   const flush = await flushMailQueue();
   if (flush.failed > 0) {
     return NextResponse.json({ error: 'Échec de l’envoi — vérifiez les identifiants (détail dans la file)' }, { status: 502 });

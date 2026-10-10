@@ -11,7 +11,8 @@ import {
   slotsForDate,
   waLink,
 } from '@/lib/booking';
-import { brandedEmail, getMailConfig, queueMail, flushMailQueue } from '@/lib/mail';
+import { emailBrand, getMailConfig, queueBrandedMail, flushMailQueue } from '@/lib/mail';
+import { queueReceiptMail, prettyPhone } from '@/lib/reservation-mail';
 import { leadEventId, sendLeadEvent } from '@/lib/openai-ads';
 
 export async function GET(req: NextRequest) {
@@ -135,8 +136,6 @@ export async function POST(req: NextRequest) {
   }
 
   // e-mails : accusé de réception au client + notification à l'admin
-  const siteTitle = site.theme.brand.siteTitle;
-  const accent = site.theme.colors.primary;
   const details: Array<[string, string]> = [
     ['Service', String(service ?? '—')],
     ['Date', frDate(dateS)],
@@ -148,39 +147,40 @@ export async function POST(req: NextRequest) {
   ];
   if (budgetS) details.push(['Budget marketing', budgetS]);
   if (emailS) {
-    await queueMail(
-      emailS,
-      `Demande de réservation reçue — ${siteTitle}`,
-      brandedEmail({
-        siteTitle,
-        accent,
-        title: 'Votre demande est bien reçue ✅',
-        intro: `Bonjour ${nameS},
-Merci pour votre demande de rendez-vous. Nous la vérifions et vous envoyons la confirmation définitive très rapidement (avec l'invitation à ajouter à votre agenda).`,
-        rows: details,
-        outro: 'Besoin de modifier ou d’annuler ? Répondez simplement à cet e-mail.',
-        signature: `À très bientôt,
-L'équipe ${siteTitle}`,
-      }),
+    await queueReceiptMail(
+      { id, name: nameS, email: emailS, phone: phoneS, service: String(service ?? '') || null, date: dateS, slot: slotS },
+      [
+        ['WhatsApp', phoneS],
+        ['Page à promouvoir', socialS],
+        ["Domaine d'activité", domainS],
+        ...(budgetS ? [['Budget marketing', budgetS] as [string, string]] : []),
+      ],
     );
   }
   const mailCfg = await getMailConfig();
   if (mailCfg.adminEmail) {
-    await queueMail(
-      mailCfg.adminEmail,
-      `📅 Nouvelle réservation — ${nameS} · ${frDate(dateS)} ${slotS}`,
-      brandedEmail({
-        siteTitle,
-        accent,
-        title: 'Nouvelle demande de réservation',
-        intro: 'Une nouvelle demande vient d’arriver sur votre site.',
-        rows: [...details, ['E-mail client', emailS || '—'], ['Message', String(message ?? '—') || '—']],
-        ctaLabel: 'Répondre sur WhatsApp',
-        ctaUrl:
-          waLink(phoneS, `Bonjour ${nameS}, bien reçu votre demande de réservation (${frDate(dateS)} à ${slotS}) — je vous confirme rapidement !`) ??
-          undefined,
-      }),
-    );
+    const msgTrimmed = String(message ?? '').trim();
+    await queueBrandedMail(mailCfg.adminEmail, `Nouvelle réservation — ${nameS} · ${frDate(dateS)} ${slotS}`, emailBrand(site), {
+      preheader: `${nameS} demande ${String(service ?? 'un rendez-vous')} le ${frDate(dateS)} à ${slotS}.`,
+      title: 'Nouvelle demande de réservation',
+      intro: 'Une nouvelle demande vient d’arriver sur votre site. Confirmez-la depuis l’administration pour envoyer au client son invitation.',
+      highlight: { label: 'Créneau demandé', value: `${frDate(dateS).replace(/^./, (ch) => ch.toUpperCase())} · ${slotS}`, detail: String(service ?? '') || undefined },
+      rows: [
+        ['Nom', nameS],
+        ['WhatsApp', prettyPhone(phoneS)],
+        ['E-mail', emailS || '—'],
+        ['Page à promouvoir', socialS],
+        ["Domaine d'activité", domainS],
+        ...(budgetS ? [['Budget marketing', budgetS] as [string, string]] : []),
+        ['Message', msgTrimmed || '—'],
+      ],
+      ctas: [
+        { label: 'Voir les réservations', url: `${req.nextUrl.origin}/admin/reservations` },
+        ...(waLink(phoneS, `Bonjour ${nameS}, bien reçu votre demande de réservation (${frDate(dateS)} à ${slotS}) — je vous confirme rapidement !`)
+          ? [{ label: 'Répondre sur WhatsApp', url: waLink(phoneS, `Bonjour ${nameS}, bien reçu votre demande de réservation (${frDate(dateS)} à ${slotS}) — je vous confirme rapidement !`) as string, secondary: true }]
+          : []),
+      ],
+    });
   }
   void flushMailQueue().catch(() => {});
 
